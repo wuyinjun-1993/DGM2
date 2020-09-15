@@ -8514,7 +8514,7 @@ class DGM2_ODE(nn.Module):
         rec_loss1, kl_loss, first_kl_loss, final_rmse_loss, interpolated_loss, rec_loss2, final_ae_loss = self.infer0(x, origin_x, x_mask, origin_x_mask, new_x_mask, x_lens, x_to_predict, origin_x_to_pred, x_to_predict_mask, x_to_predict_origin_mask, x_to_predict_new_mask, x_to_predict_lens, is_GPU, device, x_time_stamps, x_to_predict_time_stamps)
         
 #         if kl_anneal == 0:
-        loss = rec_loss1 + kl_anneal*kl_loss + 5e-5*first_kl_loss + rec_loss2 + 0.01*interpolated_loss+ (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
+        loss = rec_loss1 + kl_anneal*kl_loss + 5e-5*first_kl_loss + rec_loss2 + 0.0001*interpolated_loss+ (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
 #         else:
 #             loss = rec_loss1 + kl_anneal*kl_loss + 5e-5*first_kl_loss + rec_loss2 + (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
         

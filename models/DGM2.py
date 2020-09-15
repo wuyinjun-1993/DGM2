@@ -150,7 +150,7 @@ class DGM2(nn.Module):
         
         self.gaussian_prior_coeff = config['gaussian']
         
-        self.pre_impute = False
+        self.pre_impute = True
         
         self.cluster_mask = False
 #         self.loss_with_mask = True
@@ -5533,7 +5533,7 @@ class DGM2(nn.Module):
 #         if rec_loss1 < 30:
 #             loss = 20*kl_loss + 5e-5*first_kl_loss + rec_loss2# + 0.001*interpolated_loss# (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
 #         else:
-        loss = rec_loss1 + kl_anneal*kl_loss + 5e-5*first_kl_loss + rec_loss2 + 0.01*interpolated_loss# (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
+        loss = rec_loss1 + kl_anneal*kl_loss + 5e-5*first_kl_loss + rec_loss2 + 0.0001*interpolated_loss# (10 + 10* kl_anneal)*final_ae_loss# + 0.01*interpolated_loss# + 0.001*self.get_regularization_term()#+ 0.001*self.compute_phi_table_gap()# + 0.001*final_entropy_loss#
         
         
 #         print(torch.norm(rec_loss1 - (1-self.gaussian_prior_coeff)*rec_loss))
