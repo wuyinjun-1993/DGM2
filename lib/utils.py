@@ -22,16 +22,16 @@ from torch.utils.data import Dataset, DataLoader
 
 
 
-data_dir = '.gitignore/'
+data_dir = 'dataset_dir/'
 synthetic_sub_data_dir = 'synthetic_data/' 
 mimic3_data_dir = 'mimic3_data/'
 beijing_data_dir = 'beijing_air'
 climate_data_dir = 'climate/tensor/'
 physionet_data_dir = 'physionet/'
 output_dir = 'output/'
-GRUI_train_dir = '.gitignore/GRUI/imputation_train_results/WGAN_no_mask/'
+GRUI_train_dir = data_dir + 'GRUI/imputation_train_results/WGAN_no_mask/'
 
-GRUI_test_dir = '.gitignore/GRUI/imputation_test_results/WGAN_no_mask/'
+GRUI_test_dir = data_dir + '/GRUI/imputation_test_results/WGAN_no_mask/'
 
 
 
@@ -733,17 +733,17 @@ def add_random_missing_values(dataset, masks, missing_ratio, train_time_len):
 def split_and_subsample_batch(data_dict, args, data_type = "train"):
     if data_type == "train":
         # Training set
-        if args.extrap:
-            processed_dict = split_data_extrap(data_dict, dataset = args.dataset)
-        else:
-            processed_dict = split_data_interp(data_dict)
+#         if args.extrap:
+        processed_dict = split_data_extrap(data_dict, dataset = args.dataset)
+#         else:
+#             processed_dict = split_data_interp(data_dict)
 
     else:
         # Test set
-        if args.extrap:
-            processed_dict = split_data_extrap(data_dict, dataset = args.dataset)
-        else:
-            processed_dict = split_data_interp(data_dict)
+#         if args.extrap:
+        processed_dict = split_data_extrap(data_dict, dataset = args.dataset)
+#         else:
+#             processed_dict = split_data_interp(data_dict)
 
     # add mask
     processed_dict = add_mask(processed_dict)

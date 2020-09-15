@@ -39,6 +39,8 @@ from scipy.stats import iqr
 
 min_time_series_len = 10
 
+climate_data_name = 'USHCN'
+
 
 data_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/" + data_dir
 
@@ -573,7 +575,7 @@ def parse_datasets(args, device):
             args.n = wrapped_train_y.data.shape[0] + wrapped_test_y.data.shape[0]
     
     
-    if dataset_name.startswith('climate'):
+    if dataset_name.startswith(climate_data_name):
         
         if args.new:
         
@@ -1344,6 +1346,63 @@ def basic_collate_fn(batch, args, data_type = "train"):
         data_dict = split_and_subsample_batch(data_dict, args, data_type = data_type)
         return data_dict
 
+
+def partition_validation_set(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps):
+    
+    validation_size = int(train_y.shape[0]/8)
+    
+    all_ids = torch.randperm(train_y.shape[0])
+
+#     new_train_ids = all_ids[]
+    
+    validation_ids = all_ids[0:validation_size]
+    
+    new_training_ids = all_ids[validation_size:]
+    
+    
+    valid_y= train_y[validation_ids]
+    
+    valid_mask_train = masks_train[validation_ids]
+    
+    valid_origin_train_masks = origin_train_masks[validation_ids]
+    
+    valid_random_train_masks = random_train_masks[validation_ids]
+    
+    valid_train_lens = train_lens[validation_ids]
+    
+    valid_train_time_stamps = train_time_stamps[validation_ids]
+    
+    valid_train_delta_time_stamps = train_delta_time_stamps[validation_ids]
+    
+    
+    wrapped_valid_y = MyDataset(valid_y, valid_mask_train, valid_origin_train_masks, valid_random_train_masks, valid_train_lens, valid_train_time_stamps, valid_train_delta_time_stamps)
+    
+    
+    print('validation data size::', valid_y.shape[0])
+    
+    
+    new_train_y = train_y[new_training_ids]
+    
+    new_masks_train = masks_train[new_training_ids]
+    
+    new_origin_train_masks = origin_train_masks[new_training_ids]
+    
+    new_random_train_masks = random_train_masks[new_training_ids]
+    
+    new_train_lens = train_lens[new_training_ids]
+    
+    new_train_time_stamps = train_time_stamps[new_training_ids]
+    
+    new_train_delta_time_stamps = train_delta_time_stamps[new_training_ids]
+    
+    
+    wrapped_train_y = MyDataset(new_train_y, new_masks_train, new_origin_train_masks, new_random_train_masks, new_train_lens, new_train_time_stamps, new_train_delta_time_stamps)
+    
+    
+    print('training data size::', new_train_y.shape[0])
+    
+    return wrapped_train_y, wrapped_valid_y
+
 def generate_new_time_series(args):
     
     
@@ -1565,7 +1624,7 @@ def generate_new_time_series(args):
 #             args.n = wrapped_train_y.data.shape[0] + wrapped_test_y.data.shape[0]
     
     
-    if dataset_name.startswith('climate'):
+    if dataset_name.startswith(climate_data_name):
         
         print('generate climate time series')
         
@@ -1777,7 +1836,10 @@ def generate_new_time_series(args):
 #             train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
 #             test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
         
-        wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+        
+        wrapped_train_y, wrapped_valid_y = partition_validation_set(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+        
+#         wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
     
         wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
         
@@ -1791,468 +1853,479 @@ def generate_new_time_series(args):
         
         torch.save(wrapped_train_y, os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_train_y')
         
+        torch.save(wrapped_valid_y, os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_valid_y')
+        
         torch.save(wrapped_test_y, os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_test_y')
     
     
     
-    if dataset_name.startswith('beijing'):
-        
-        print('generate climate time series')
-        
-#         if args.new:
-        
-        train_dataset = torch.load(os.path.join(data_folder, beijing_data_dir) + '/training_tensor').type(torch.FloatTensor)
-        train_y = train_dataset
-        
-        origin_train_y = train_dataset.clone()
-        
-        train_time_stamps = torch.tensor(list(range(train_y.shape[1])))
-        
-        train_time_stamps = train_time_stamps.expand(train_y.shape[0], train_y.shape[1])
-        
-        
-        train_lens = torch.ones(train_y.shape[0], dtype = torch.long)*train_y.shape[1]
-        
-        
-        
-        masks_train = torch.load(os.path.join(data_folder, beijing_data_dir) + '/training_mask')
-        
-        test_dataset = torch.load(os.path.join(data_folder, beijing_data_dir) + '/test_tensor').type(torch.FloatTensor)
-        
-        test_y = test_dataset
-        
-        origin_test_y = test_dataset.clone()
-        
-        test_lens = torch.ones(test_y.shape[0], dtype = torch.long)*test_y.shape[1]
-        
-        test_time_stamps = torch.tensor(list(range(test_y.shape[1])))
-
-        test_time_stamps = test_time_stamps.expand(test_y.shape[0], test_y.shape[1])
-        
-        masks_test = torch.load(os.path.join(data_folder, beijing_data_dir) + '/test_mask')
-        
-        
-        train_delta_time_stamps = train_time_stamps.clone()
-        
-        test_delta_time_stamps = test_time_stamps.clone()
-#             test_lens = torch.load(os.path.join(data_folder, mimic3_data_dir) + '/mimic3_test_tensor_len').type(torch.LongTensor)
-        
-#         if args.model in models_to_remove_none_time_stamps:
+#     if dataset_name.startswith('beijing'):
 #         
-#             new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
-#             
-#             new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
+#         print('generate climate time series')
+#         
+# #         if args.new:
+#         
+#         train_dataset = torch.load(os.path.join(data_folder, beijing_data_dir) + '/training_tensor').type(torch.FloatTensor)
+#         train_y = train_dataset
+#         
+#         origin_train_y = train_dataset.clone()
+#         
+#         train_time_stamps = torch.tensor(list(range(train_y.shape[1])))
+#         
+#         train_time_stamps = train_time_stamps.expand(train_y.shape[0], train_y.shape[1])
 #         
 #         
-#             check_remove_none(train_y, new_train_y)
+#         train_lens = torch.ones(train_y.shape[0], dtype = torch.long)*train_y.shape[1]
 #         
-#             train_y = new_train_y
-#             
-#             test_y = new_test_y
 #         
-#         if args.model == 'DHMM_cluster_tlstm':
-#             train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
-#             
-#             test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
 #         
-#         if args.model == GRUD_method:
-#             train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
-#             
-#             test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
-        
-#             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
-        
-        print(torch.norm(torch.sum(masks_train, 2) - torch.sum(1-np.isnan(train_y), 2)))
-        
-        
-        print(torch.norm(torch.sum(masks_train, [1,2]) - torch.sum(1-np.isnan(train_y), [1,2])))
-        
-#             for k in range(masks_train.shape[0]):
-#                 for p in range(masks_train.shape[1]):
-#                     if not torch.sum(masks_train[k,p]) == torch.sum(1-np.isnan(train_y[k,p])):
-#                         print('here')
-#             
-#                 if not torch.sum(masks_train[k]) == torch.sum(1-np.isnan(train_y[k])):
-#                     print('here')
-                
-                            
-        assert torch.sum(masks_train, dtype=torch.double) == torch.sum(1-np.isnan(train_y), dtype=torch.double)
-#             time_steps_extrap = dataset[:,:,0]
-        
-#             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
-
-
-        all_features_not_all_missing_values = get_features_with_one_value(masks_train, masks_test)
-        
-        train_y = train_y[:,:,all_features_not_all_missing_values]
-        
-        masks_train = masks_train[:,:,all_features_not_all_missing_values]
-        
-        
-        
-        
-        
-        
-        train_y = train_y[train_lens >= min_time_series_len]
-        
-        train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
-        
-#         if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#             train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
-#         else:
-#             train_delta_time_stamps = train_time_stamps.clone()
-        
-        masks_train = masks_train[train_lens >= min_time_series_len]
-        
-        train_lens = train_lens[train_lens >= min_time_series_len]
-        
-        
-        
-        test_y = test_y[:,:,all_features_not_all_missing_values]
-        
-        
-        
-        masks_test = masks_test[:,:,all_features_not_all_missing_values]
-
-        
-        
-        
-        test_y = test_y[test_lens > 1]
-        
-#         if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#             test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
-#         else:
-#             test_delta_time_stamps = test_time_stamps.clone()
-        
-        
-        test_time_stamps = test_time_stamps[test_lens >= 1]
-        
-        masks_test = masks_test[test_lens > 1]
-        
-        test_lens = test_lens[test_lens > 1]
-
-
-
-
-        train_y[train_y != train_y] = -1000
-        
-        test_y[test_y != test_y] = -1000
-        
-        args.n = train_y.shape[0] + test_y.shape[0]
-        
-        
-        
-#             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
-
-#             masks_train = torch.ones_like(train_y)
-
-        train_y, masks_train = remove_outliers2(train_y, masks_train)
-
-#             masks_test = torch.ones_like(test_y)
-
-        test_y, masks_test = remove_outliers2(test_y, masks_test)
-
-        origin_train_masks = masks_train.clone()
-        
-        origin_test_masks = masks_test.clone()
-        random_train_masks = torch.ones_like(origin_train_masks)
-    
-        random_test_masks = torch.ones_like(origin_test_masks)
-
-        train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
-
-        print(train_y.shape)
-
-        masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, beijing_data_train_len)
-         
-        masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, beijing_data_train_len)
-        
-        
-#             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
-        
-        
-
-        
-#         dataset = normalize_dataset(dataset)
-
-
-#         train_y = train_y.to(device)
+#         masks_train = torch.load(os.path.join(data_folder, beijing_data_dir) + '/training_mask')
 #         
-#         test_y = test_y.to(device)
-#             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
-
-        
-#             upper_id = 1060
-#             
-#             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
-        
-#         if args.model == 'Linear_regression':
-#             
-#             train_y_copy = train_y.clone()
-#             
-#             test_y_copy = test_y.clone()
-#             
-#             train_y_copy[masks_train == 0] = 0
-#             test_y_copy[masks_test == 0] = 0
-#             
-#             print(torch.norm((train_y_copy - train_y)*masks_train))
-#             
-#             train_y = train_y_copy
-#             
-#             test_y = test_y_copy
+#         test_dataset = torch.load(os.path.join(data_folder, beijing_data_dir) + '/test_tensor').type(torch.FloatTensor)
 #         
-#         if args.model == cluster_ODE_method or args.model == l_ODE_method:
-#             train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-#             test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-        
-        wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
-    
-        wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
-        
-        
-        
-        if not os.path.exists(data_folder):
-            os.makedirs(data_folder)
-            
-        if not os.path.exists(data_folder + climate_data_dir):
-            os.makedirs(data_folder + climate_data_dir)
-        
-        torch.save(wrapped_train_y, os.path.join(data_folder, beijing_data_dir) + '/dataset_train_y')
-        
-        torch.save(wrapped_test_y, os.path.join(data_folder, beijing_data_dir) + '/dataset_test_y')
-#         torch.save(time_steps_extrap, os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/time_steps')
-        
-#         else:
-# #             dataset = torch.load(data_folder + shl_tensor_folder + '/shl_tensor').type(torch.FloatTensor)
-#             
-#             wrapped_train_y = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_train_y')
-#             
-#             wrapped_test_y = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_test_y') 
+#         test_y = test_dataset
+#         
+#         origin_test_y = test_dataset.clone()
+#         
+#         test_lens = torch.ones(test_y.shape[0], dtype = torch.long)*test_y.shape[1]
+#         
+#         test_time_stamps = torch.tensor(list(range(test_y.shape[1])))
 # 
-#             time_steps_extrap = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/time_steps')
+#         test_time_stamps = test_time_stamps.expand(test_y.shape[0], test_y.shape[1])
+#         
+#         masks_test = torch.load(os.path.join(data_folder, beijing_data_dir) + '/test_mask')
+#         
+#         
+#         train_delta_time_stamps = train_time_stamps.clone()
+#         
+#         test_delta_time_stamps = test_time_stamps.clone()
+# #             test_lens = torch.load(os.path.join(data_folder, mimic3_data_dir) + '/mimic3_test_tensor_len').type(torch.LongTensor)
+#         
+# #         if args.model in models_to_remove_none_time_stamps:
+# #         
+# #             new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
+# #             
+# #             new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
+# #         
+# #         
+# #             check_remove_none(train_y, new_train_y)
+# #         
+# #             train_y = new_train_y
+# #             
+# #             test_y = new_test_y
+# #         
+# #         if args.model == 'DHMM_cluster_tlstm':
+# #             train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
+# #             
+# #             test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
+# #         
+# #         if args.model == GRUD_method:
+# #             train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
+# #             
+# #             test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
+#         
+# #             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
+#         
+#         print(torch.norm(torch.sum(masks_train, 2) - torch.sum(1-np.isnan(train_y), 2)))
+#         
+#         
+#         print(torch.norm(torch.sum(masks_train, [1,2]) - torch.sum(1-np.isnan(train_y), [1,2])))
+#         
+# #             for k in range(masks_train.shape[0]):
+# #                 for p in range(masks_train.shape[1]):
+# #                     if not torch.sum(masks_train[k,p]) == torch.sum(1-np.isnan(train_y[k,p])):
+# #                         print('here')
+# #             
+# #                 if not torch.sum(masks_train[k]) == torch.sum(1-np.isnan(train_y[k])):
+# #                     print('here')
+#                 
+#                             
+#         assert torch.sum(masks_train, dtype=torch.double) == torch.sum(1-np.isnan(train_y), dtype=torch.double)
+# #             time_steps_extrap = dataset[:,:,0]
+#         
+# #             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
 # 
-#             args.n = wrapped_train_y.data.shape[0] + wrapped_test_y.data.shape[0]
-    
-    if dataset_name == 'physionet':
-        
-#         if args.new:
-        
-            train_dataset = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_dataset_tensor').type(torch.FloatTensor)
-            train_y = train_dataset
-            
-#             train_time_stamps = torch.tensor(list(range(train_y.shape[1])))
-#             
-#             train_time_stamps = train_time_stamps.expand(train_y.shape[0], train_y.shape[1])
-            
-            
-            train_time_stamps = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_time_stamps')
-            
-            train_lens = torch.ones(train_y.shape[0], dtype = torch.long)*train_y.shape[1]
-            
-            
-            
-            masks_train = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_mask_tensor')
-            
-            test_dataset = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_dataset_tensor').type(torch.FloatTensor)
-            
-            test_y = test_dataset
-            
-            test_lens = torch.ones(test_y.shape[0], dtype = torch.long)*test_y.shape[1]
-            
-#             test_time_stamps = torch.tensor(list(range(test_y.shape[1])))
+# 
+#         all_features_not_all_missing_values = get_features_with_one_value(masks_train, masks_test)
+#         
+#         train_y = train_y[:,:,all_features_not_all_missing_values]
+#         
+#         masks_train = masks_train[:,:,all_features_not_all_missing_values]
+#         
+#         
+#         
+#         
+#         
+#         
+#         train_y = train_y[train_lens >= min_time_series_len]
+#         
+#         train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
+#         
+# #         if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #             train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
+# #         else:
+# #             train_delta_time_stamps = train_time_stamps.clone()
+#         
+#         masks_train = masks_train[train_lens >= min_time_series_len]
+#         
+#         train_lens = train_lens[train_lens >= min_time_series_len]
+#         
+#         
+#         
+#         test_y = test_y[:,:,all_features_not_all_missing_values]
+#         
+#         
+#         
+#         masks_test = masks_test[:,:,all_features_not_all_missing_values]
+# 
+#         
+#         
+#         
+#         test_y = test_y[test_lens > 1]
+#         
+# #         if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #             test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
+# #         else:
+# #             test_delta_time_stamps = test_time_stamps.clone()
+#         
+#         
+#         test_time_stamps = test_time_stamps[test_lens >= 1]
+#         
+#         masks_test = masks_test[test_lens > 1]
+#         
+#         test_lens = test_lens[test_lens > 1]
+# 
+# 
+# 
+# 
+#         train_y[train_y != train_y] = -1000
+#         
+#         test_y[test_y != test_y] = -1000
+#         
+#         args.n = train_y.shape[0] + test_y.shape[0]
+#         
+#         
+#         
+# #             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
+# 
+# #             masks_train = torch.ones_like(train_y)
+# 
+#         train_y, masks_train = remove_outliers2(train_y, masks_train)
+# 
+# #             masks_test = torch.ones_like(test_y)
+# 
+#         test_y, masks_test = remove_outliers2(test_y, masks_test)
+# 
+#         origin_train_masks = masks_train.clone()
+#         
+#         origin_test_masks = masks_test.clone()
+#         random_train_masks = torch.ones_like(origin_train_masks)
 #     
-#             test_time_stamps = test_time_stamps.expand(test_y.shape[0], test_y.shape[1])
-            test_time_stamps = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_time_stamps')
-            
-            masks_test = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_mask_tensor')
-            
-            train_delta_time_stamps = train_time_stamps.clone()
-        
-            test_delta_time_stamps = test_time_stamps.clone()
-#             test_lens = torch.load(os.path.join(data_folder, mimic3_data_dir) + '/mimic3_test_tensor_len').type(torch.LongTensor)
-            
-#             if args.model in models_to_remove_none_time_stamps:
+#         random_test_masks = torch.ones_like(origin_test_masks)
+# 
+#         train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
+# 
+#         print(train_y.shape)
+# 
+#         masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, beijing_data_train_len)
+#          
+#         masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, beijing_data_train_len)
+#         
+#         
+# #             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
+#         
+#         
+# 
+#         
+# #         dataset = normalize_dataset(dataset)
+# 
+# 
+# #         train_y = train_y.to(device)
+# #         
+# #         test_y = test_y.to(device)
+# #             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
+# 
+#         
+# #             upper_id = 1060
+# #             
+# #             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
+#         
+# #         if args.model == 'Linear_regression':
+# #             
+# #             train_y_copy = train_y.clone()
+# #             
+# #             test_y_copy = test_y.clone()
+# #             
+# #             train_y_copy[masks_train == 0] = 0
+# #             test_y_copy[masks_test == 0] = 0
+# #             
+# #             print(torch.norm((train_y_copy - train_y)*masks_train))
+# #             
+# #             train_y = train_y_copy
+# #             
+# #             test_y = test_y_copy
+# #         
+# #         if args.model == cluster_ODE_method or args.model == l_ODE_method:
+# #             train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+# #             test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+#         
+#         
+#         wrapped_train_y, wrapped_valid_y = partition_validation_set(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#         
+# #         wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#     
+#         wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
+#         
+#         
+#         
+#         if not os.path.exists(data_folder):
+#             os.makedirs(data_folder)
 #             
-#                 new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
-#                 
-#                 new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
+#         if not os.path.exists(data_folder + climate_data_dir):
+#             os.makedirs(data_folder + climate_data_dir)
+#         
+#         torch.save(wrapped_train_y, os.path.join(data_folder, beijing_data_dir) + '/dataset_train_y')
+#         
+#         torch.save(wrapped_test_y, os.path.join(data_folder, beijing_data_dir) + '/dataset_test_y')
+#         
+#         torch.save(wrapped_valid_y, os.path.join(data_folder, beijing_data_dir) + '/dataset_valid_y')
+# #         torch.save(time_steps_extrap, os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/time_steps')
+#         
+# #         else:
+# # #             dataset = torch.load(data_folder + shl_tensor_folder + '/shl_tensor').type(torch.FloatTensor)
+# #             
+# #             wrapped_train_y = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_train_y')
+# #             
+# #             wrapped_test_y = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/dataset_test_y') 
+# # 
+# #             time_steps_extrap = torch.load(os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name) + '/time_steps')
+# # 
+# #             args.n = wrapped_train_y.data.shape[0] + wrapped_test_y.data.shape[0]
+#     
+#     if dataset_name == 'physionet':
+#         
+# #         if args.new:
+#         
+#             train_dataset = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_dataset_tensor').type(torch.FloatTensor)
+#             train_y = train_dataset
+#             
+# #             train_time_stamps = torch.tensor(list(range(train_y.shape[1])))
+# #             
+# #             train_time_stamps = train_time_stamps.expand(train_y.shape[0], train_y.shape[1])
 #             
 #             
-#                 check_remove_none(train_y, new_train_y)
+#             train_time_stamps = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_time_stamps')
 #             
-#                 train_y = new_train_y
-#                 
-#                 test_y = new_test_y
+#             train_lens = torch.ones(train_y.shape[0], dtype = torch.long)*train_y.shape[1]
 #             
-#             if args.model == 'DHMM_cluster_tlstm':
-#                 train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
-#                 
-#                 test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
 #             
-#             if args.model == GRUD_method:
-#                 train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
-#                 
-#                 test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
-            
-#             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
-            
-            print(torch.norm(torch.sum(masks_train, 2) - torch.sum(1-np.isnan(train_y), 2)))
-            
-            
-            print(torch.norm(torch.sum(masks_train, [1,2]) - torch.sum(1-np.isnan(train_y), [1,2])))
-            
-#             for k in range(masks_train.shape[0]):
-#                 for p in range(masks_train.shape[1]):
-#                     if not torch.sum(masks_train[k,p]) == torch.sum(1-np.isnan(train_y[k,p])):
-#                         print('here')
 #             
-#                 if not torch.sum(masks_train[k]) == torch.sum(1-np.isnan(train_y[k])):
-#                     print('here')
-                    
-                                
-#             assert torch.sum(masks_train, dtype=torch.double) == torch.sum(1-np.isnan(train_y), dtype=torch.double)
-#             time_steps_extrap = dataset[:,:,0]
-            
-#             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
-    
-    
-            all_features_not_all_missing_values = get_features_with_one_value(masks_train, masks_test)
-            
-            train_y = train_y[:,:,all_features_not_all_missing_values]
-            
-            masks_train = masks_train[:,:,all_features_not_all_missing_values]
-            
-            
-            
-            
-            
-            
-            train_y = train_y[train_lens >= min_time_series_len]
-            
-            train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
-            
-#             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#                 train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
-#             else:
-#                 train_delta_time_stamps = train_time_stamps.clone()
-            
-            masks_train = masks_train[train_lens >= min_time_series_len]
-            
-            train_lens = train_lens[train_lens >= min_time_series_len]
-            
-            
-            
-            test_y = test_y[:,:,all_features_not_all_missing_values]
-            
-            
-            
-            masks_test = masks_test[:,:,all_features_not_all_missing_values]
-
-            
-            
-            
-            test_y = test_y[test_lens > 1]
-            
-#             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#                 test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
-#             else:
-#                 test_delta_time_stamps = test_time_stamps.clone()
-            
-            
-            test_time_stamps = test_time_stamps[test_lens >= 1]
-            
-            masks_test = masks_test[test_lens > 1]
-            
-            test_lens = test_lens[test_lens > 1]
-
-
-
-
-            train_y[train_y != train_y] = -1000
-            
-            test_y[test_y != test_y] = -1000
-            
-            args.n = train_y.shape[0] + test_y.shape[0]
-            
-            
-            
-#             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
-    
-#             masks_train = torch.ones_like(train_y)
-    
-            train_y, masks_train = remove_outliers(train_y, masks_train)
-    
-#             masks_test = torch.ones_like(test_y)
-    
-            test_y, masks_test = remove_outliers(test_y, masks_test)
-    
-            origin_train_masks = masks_train.clone()
-            
-            origin_test_masks = masks_test.clone()
-            random_train_masks = torch.ones_like(origin_train_masks)
-        
-            random_test_masks = torch.ones_like(origin_test_masks)
-    
-            train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
-    
-            masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, physionet_data_train_len)
-             
-            masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, physionet_data_train_len)
-            
-            
-#             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
-            
-            
-    
-            
-    #         dataset = normalize_dataset(dataset)
-    
-    
-    #         train_y = train_y.to(device)
-    #         
-    #         test_y = test_y.to(device)
-#             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
-
-            
-#             upper_id = 1060
+#             masks_train = torch.load(os.path.join(data_folder, physionet_data_dir) + '/train_mask_tensor')
 #             
-#             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
-            
-#             if args.model == 'Linear_regression':
+#             test_dataset = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_dataset_tensor').type(torch.FloatTensor)
+#             
+#             test_y = test_dataset
+#             
+#             test_lens = torch.ones(test_y.shape[0], dtype = torch.long)*test_y.shape[1]
+#             
+# #             test_time_stamps = torch.tensor(list(range(test_y.shape[1])))
+# #     
+# #             test_time_stamps = test_time_stamps.expand(test_y.shape[0], test_y.shape[1])
+#             test_time_stamps = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_time_stamps')
+#             
+#             masks_test = torch.load(os.path.join(data_folder, physionet_data_dir) + '/test_mask_tensor')
+#             
+#             train_delta_time_stamps = train_time_stamps.clone()
+#         
+#             test_delta_time_stamps = test_time_stamps.clone()
+# #             test_lens = torch.load(os.path.join(data_folder, mimic3_data_dir) + '/mimic3_test_tensor_len').type(torch.LongTensor)
+#             
+# #             if args.model in models_to_remove_none_time_stamps:
+# #             
+# #                 new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
+# #                 
+# #                 new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
+# #             
+# #             
+# #                 check_remove_none(train_y, new_train_y)
+# #             
+# #                 train_y = new_train_y
+# #                 
+# #                 test_y = new_test_y
+# #             
+# #             if args.model == 'DHMM_cluster_tlstm':
+# #                 train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
+# #                 
+# #                 test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
+# #             
+# #             if args.model == GRUD_method:
+# #                 train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
+# #                 
+# #                 test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
+#             
+# #             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
+#             
+#             print(torch.norm(torch.sum(masks_train, 2) - torch.sum(1-np.isnan(train_y), 2)))
+#             
+#             
+#             print(torch.norm(torch.sum(masks_train, [1,2]) - torch.sum(1-np.isnan(train_y), [1,2])))
+#             
+# #             for k in range(masks_train.shape[0]):
+# #                 for p in range(masks_train.shape[1]):
+# #                     if not torch.sum(masks_train[k,p]) == torch.sum(1-np.isnan(train_y[k,p])):
+# #                         print('here')
+# #             
+# #                 if not torch.sum(masks_train[k]) == torch.sum(1-np.isnan(train_y[k])):
+# #                     print('here')
+#                     
+#                                 
+# #             assert torch.sum(masks_train, dtype=torch.double) == torch.sum(1-np.isnan(train_y), dtype=torch.double)
+# #             time_steps_extrap = dataset[:,:,0]
+#             
+# #             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
+#     
+#     
+#             all_features_not_all_missing_values = get_features_with_one_value(masks_train, masks_test)
+#             
+#             train_y = train_y[:,:,all_features_not_all_missing_values]
+#             
+#             masks_train = masks_train[:,:,all_features_not_all_missing_values]
+#             
+#             
+#             
+#             
+#             
+#             
+#             train_y = train_y[train_lens >= min_time_series_len]
+#             
+#             train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
+#             
+# #             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #                 train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
+# #             else:
+# #                 train_delta_time_stamps = train_time_stamps.clone()
+#             
+#             masks_train = masks_train[train_lens >= min_time_series_len]
+#             
+#             train_lens = train_lens[train_lens >= min_time_series_len]
+#             
+#             
+#             
+#             test_y = test_y[:,:,all_features_not_all_missing_values]
+#             
+#             
+#             
+#             masks_test = masks_test[:,:,all_features_not_all_missing_values]
+# 
+#             
+#             
+#             
+#             test_y = test_y[test_lens > 1]
+#             
+# #             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #                 test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
+# #             else:
+# #                 test_delta_time_stamps = test_time_stamps.clone()
+#             
+#             
+#             test_time_stamps = test_time_stamps[test_lens >= 1]
+#             
+#             masks_test = masks_test[test_lens > 1]
+#             
+#             test_lens = test_lens[test_lens > 1]
+# 
+# 
+# 
+# 
+#             train_y[train_y != train_y] = -1000
+#             
+#             test_y[test_y != test_y] = -1000
+#             
+#             args.n = train_y.shape[0] + test_y.shape[0]
+#             
+#             
+#             
+# #             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
+#     
+# #             masks_train = torch.ones_like(train_y)
+#     
+#             train_y, masks_train = remove_outliers(train_y, masks_train)
+#     
+# #             masks_test = torch.ones_like(test_y)
+#     
+#             test_y, masks_test = remove_outliers(test_y, masks_test)
+#     
+#             origin_train_masks = masks_train.clone()
+#             
+#             origin_test_masks = masks_test.clone()
+#             random_train_masks = torch.ones_like(origin_train_masks)
+#         
+#             random_test_masks = torch.ones_like(origin_test_masks)
+#     
+#             train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
+#     
+#             masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, physionet_data_train_len)
+#              
+#             masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, physionet_data_train_len)
+#             
+#             
+# #             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
+#             
+#             
+#     
+#             
+#     #         dataset = normalize_dataset(dataset)
+#     
+#     
+#     #         train_y = train_y.to(device)
+#     #         
+#     #         test_y = test_y.to(device)
+# #             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
+# 
+#             
+# #             upper_id = 1060
+# #             
+# #             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
+#             
+# #             if args.model == 'Linear_regression':
+# #                 
+# #                 train_y_copy = train_y.clone()
+# #                 
+# #                 test_y_copy = test_y.clone()
+# #                 
+# #                 train_y_copy[masks_train == 0] = 0
+# #                 test_y_copy[masks_test == 0] = 0
+# #                 
+# #                 print(torch.norm((train_y_copy - train_y)*masks_train))
+# #                 
+# #                 train_y = train_y_copy
+# #                 
+# #                 test_y = test_y_copy
+# #                 
+# #                 
+# #             if args.model == cluster_ODE_method or args.model == l_ODE_method:
+# #                 train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+# #                 test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+#             
+#             wrapped_train_y, wrapped_valid_y = partition_validation_set(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#             
+# #             wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#         
+#             wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
+#             
+#             
+#             
+#             if not os.path.exists(data_folder):
+#                 os.makedirs(data_folder)
 #                 
-#                 train_y_copy = train_y.clone()
-#                 
-#                 test_y_copy = test_y.clone()
-#                 
-#                 train_y_copy[masks_train == 0] = 0
-#                 test_y_copy[masks_test == 0] = 0
-#                 
-#                 print(torch.norm((train_y_copy - train_y)*masks_train))
-#                 
-#                 train_y = train_y_copy
-#                 
-#                 test_y = test_y_copy
-#                 
-#                 
-#             if args.model == cluster_ODE_method or args.model == l_ODE_method:
-#                 train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-#                 test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-            
-            wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
-        
-            wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
-            
-            
-            
-            if not os.path.exists(data_folder):
-                os.makedirs(data_folder)
-                
-            if not os.path.exists(data_folder + physionet_data_dir):
-                os.makedirs(data_folder + physionet_data_dir)
-            
-            torch.save(wrapped_train_y, data_folder + physionet_data_dir + 'dataset_train_y')
-            
-            torch.save(wrapped_test_y, data_folder + physionet_data_dir + 'dataset_test_y')
+#             if not os.path.exists(data_folder + physionet_data_dir):
+#                 os.makedirs(data_folder + physionet_data_dir)
+#             
+#             torch.save(wrapped_train_y, data_folder + physionet_data_dir + 'dataset_train_y')
+#             
+#             torch.save(wrapped_valid_y, data_folder + physionet_data_dir + 'dataset_valid_y')
+#             
+#             torch.save(wrapped_test_y, data_folder + physionet_data_dir + 'dataset_test_y')
             
 #             torch.save(time_steps_extrap, data_folder + physionet_data_dir + 'time_steps')
         
@@ -2267,276 +2340,280 @@ def generate_new_time_series(args):
 # 
 #             args.n = wrapped_train_y.data.shape[0] + wrapped_test_y.data.shape[0]
 #     if dataset_name == 'mimic3_17' or dataset_name == 'mimic3_96' or dataset_name == 'mimic3_110':
-    if dataset_name.startswith('mimic3'):
-        
-#         if args.new:
-        
-        train_dataset = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_tensor').type(torch.FloatTensor)
-        masks_train = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_masks')[:,:,1:]
-
-        print(train_dataset.shape)
-        
-        train_y = train_dataset[:,:,1:]
-        
-        if dataset_name == 'mimic3_17_5':
-            
-            time_gap_in_hour = 1.0/12
-            
-            time_stamp_count = int(6/time_gap_in_hour)
-            
-            single_train_time_stamp = torch.tensor(list(range(time_stamp_count)))*time_gap_in_hour
-            
-            train_time_stamps = single_train_time_stamp.view(1,time_stamp_count)
-            
-            train_time_stamps = train_time_stamps.repeat(train_dataset.shape[0], 1)
-            
-            train_lens = torch.tensor(time_stamp_count)
-        
-            train_lens = train_lens.repeat(train_dataset.shape[0])
-            
-        else:
-           
-        
-#             train_time_stamps = train_dataset[:,:,0] 
-        
-            single_train_time_stamp = torch.tensor(list(range(mimic3_data_len)))
-            
-            train_time_stamps = single_train_time_stamp.view(1,mimic3_data_len)
-            
-            train_time_stamps = train_time_stamps.repeat(train_dataset.shape[0], 1)
-            
-            train_lens = torch.tensor(mimic3_data_len)
-        
-            train_lens = train_lens.repeat(train_dataset.shape[0])
-            
-            train_y = train_y[:,0:mimic3_data_len]
-            
-            masks_train = masks_train[:, 0:mimic3_data_len]
-        
-#             train_lens_exp = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_tensor_len0').type(torch.LongTensor)
-        print('non missing ratio::', torch.mean(masks_train))
-        
-        
-        test_dataset = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_tensor').type(torch.FloatTensor)
-        masks_test = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_masks')[:,:,1:]
-
-        
-        test_y = test_dataset[:,:,1:]
-        
-        if dataset_name == 'mimic3_17_5':
-            
-            time_gap_in_hour = 1.0/12
-            
-            time_stamp_count =int(6/time_gap_in_hour)
-            
-            single_test_time_stamp = torch.tensor(list(range(time_stamp_count)))*time_gap_in_hour
-            
-            test_time_stamps = single_test_time_stamp.view(1,time_stamp_count)
-            
-            test_time_stamps = test_time_stamps.repeat(test_dataset.shape[0], 1)
-            
-            test_lens = torch.tensor(time_stamp_count)
-        
-            test_lens = test_lens.repeat(test_dataset.shape[0])
-            
-        else:
-            
-        
-#             test_time_stamps = test_dataset[:,:,0]
-            single_test_time_stamp = torch.tensor(list(range(mimic3_data_len)))
-            
-            test_time_stamps = single_test_time_stamp.view(1,mimic3_data_len)
-            
-            test_time_stamps = test_time_stamps.repeat(test_dataset.shape[0], 1)
-            
-            test_lens = torch.tensor(mimic3_data_len)
-        
-            test_lens = test_lens.repeat(test_dataset.shape[0])
-            
-            test_y = test_y[:,0:mimic3_data_len]
-            
-            masks_test = masks_test[:, 0:mimic3_data_len]
-        
-#             test_lens = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_tensor_len0').type(torch.LongTensor)
-        
-        
-#             if args.model in models_to_remove_none_time_stamps:
-#             
-#                 new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
-#                 
-#                 new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
-#             
-#             
-#                 check_remove_none(train_y, new_train_y)
-#             
-#                 train_y = new_train_y
-#                 
-#                 test_y = new_test_y
-        
-        train_delta_time_stamps = train_time_stamps.clone()
-        
-        test_delta_time_stamps = test_time_stamps.clone()
-        
-#             if args.model == 'DHMM_cluster_tlstm':
-#                 train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
-#                 
-#                 test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
-#             
-#             if args.model == GRUD_method:
-#                 train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
-#                 
-#                 test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
-        
-#             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
-        
-        assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
-#             time_steps_extrap = dataset[:,:,0]
-        
-#             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
-
-
-        all_features_not_all_missing_values = get_features_with_one_value(masks_train.clone(), masks_train.clone())
-        
-        train_y = train_y[:,:,all_features_not_all_missing_values]
-        
-        masks_train = masks_train[:,:,all_features_not_all_missing_values]
-        
-        
-        
-        
-        
-        
-#             train_y = train_y[train_lens >= min_time_series_len]
-#             
-#             train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
-#             
-#             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#                 train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
-#             else:
-#                 train_delta_time_stamps = train_time_stamps.clone()
-#             
-#             masks_train = masks_train[train_lens >= min_time_series_len]
-#             
-#             train_lens = train_lens[train_lens >= min_time_series_len]
-        
-        
-        
-        test_y = test_y[:,:,all_features_not_all_missing_values]
-        
-        
-        
-        masks_test = masks_test[:,:,all_features_not_all_missing_values]
-
-        
-        
-        
-        test_y = test_y[test_lens > 1]
-        
-#             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
-#                 test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
-#             else:
-#                 test_delta_time_stamps = test_time_stamps.clone()
-        
-        
-        test_time_stamps = test_time_stamps[test_lens >= 1]
-        
-        masks_test = masks_test[test_lens > 1]
-        
-        test_lens = test_lens[test_lens > 1]
-
-
-
-
-        train_y[train_y != train_y] = -1000
-        
-        test_y[test_y != test_y] = -1000
-        
-        args.n = train_y.shape[0] + test_y.shape[0]
-        
-        
-        
-#             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
-
-#             masks_train = torch.ones_like(train_y)
-
-        
-#     
-#             masks_test = torch.ones_like(test_y)
-        train_y, masks_train = remove_outliers2(train_y, masks_train)
-        test_y, masks_test = remove_outliers2(test_y, masks_test)
-
-        origin_train_masks = masks_train.clone()
-        
-        origin_test_masks = masks_test.clone()
-
-
-        random_train_masks = torch.ones_like(origin_train_masks)
-        
-        random_test_masks = torch.ones_like(origin_test_masks)
-
-        train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
-
-        masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, mimic3_data_train_len)
-         
-        masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, mimic3_data_train_len)
-        
-        
-#             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
-        
-        
-
-        
-#         dataset = normalize_dataset(dataset)
-
-
-#         train_y = train_y.to(device)
+#     if dataset_name.startswith('mimic3'):
 #         
-#         test_y = test_y.to(device)
-#             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
-
-        
-#             upper_id = 1060
+# #         if args.new:
+#         
+#         train_dataset = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_tensor').type(torch.FloatTensor)
+#         masks_train = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_masks')[:,:,1:]
+# 
+#         print(train_dataset.shape)
+#         
+#         train_y = train_dataset[:,:,1:]
+#         
+#         if dataset_name == 'mimic3_17_5':
 #             
-#             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
-        
-#             if args.model == 'Linear_regression':
-#                 
-#                 train_y_copy = train_y.clone()
-#                 
-#                 test_y_copy = test_y.clone()
-#                 
-#                 train_y_copy[masks_train == 0] = 0
-#                 test_y_copy[masks_test == 0] = 0
-#                 
-#                 print(torch.norm((train_y_copy - train_y)*masks_train))
-#                 
-#                 train_y = train_y_copy
-#                 
-#                 test_y = test_y_copy
+#             time_gap_in_hour = 1.0/12
 #             
+#             time_stamp_count = int(6/time_gap_in_hour)
 #             
-#             if args.model == cluster_ODE_method or args.model == l_ODE_method:
-#                 train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-#                 test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
-        
-        wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
-    
-        wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
-        
-        
-        
-        if not os.path.exists(data_folder):
-            os.makedirs(data_folder)
-            
-        if not os.path.exists(data_folder + mimic3_data_dir):
-            os.makedirs(data_folder + mimic3_data_dir)
-        
-        if not os.path.exists(os.path.join(data_folder + mimic3_data_dir, dataset_name)):
-            os.makedirs(os.path.join(data_folder + mimic3_data_dir, dataset_name))
-        
-        torch.save(wrapped_train_y, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/dataset_train_y')
-        
-        torch.save(wrapped_test_y, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/dataset_test_y')
+#             single_train_time_stamp = torch.tensor(list(range(time_stamp_count)))*time_gap_in_hour
+#             
+#             train_time_stamps = single_train_time_stamp.view(1,time_stamp_count)
+#             
+#             train_time_stamps = train_time_stamps.repeat(train_dataset.shape[0], 1)
+#             
+#             train_lens = torch.tensor(time_stamp_count)
+#         
+#             train_lens = train_lens.repeat(train_dataset.shape[0])
+#             
+#         else:
+#            
+#         
+# #             train_time_stamps = train_dataset[:,:,0] 
+#         
+#             single_train_time_stamp = torch.tensor(list(range(mimic3_data_len)))
+#             
+#             train_time_stamps = single_train_time_stamp.view(1,mimic3_data_len)
+#             
+#             train_time_stamps = train_time_stamps.repeat(train_dataset.shape[0], 1)
+#             
+#             train_lens = torch.tensor(mimic3_data_len)
+#         
+#             train_lens = train_lens.repeat(train_dataset.shape[0])
+#             
+#             train_y = train_y[:,0:mimic3_data_len]
+#             
+#             masks_train = masks_train[:, 0:mimic3_data_len]
+#         
+# #             train_lens_exp = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_train_tensor_len0').type(torch.LongTensor)
+#         print('non missing ratio::', torch.mean(masks_train))
+#         
+#         
+#         test_dataset = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_tensor').type(torch.FloatTensor)
+#         masks_test = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_masks')[:,:,1:]
+# 
+#         
+#         test_y = test_dataset[:,:,1:]
+#         
+#         if dataset_name == 'mimic3_17_5':
+#             
+#             time_gap_in_hour = 1.0/12
+#             
+#             time_stamp_count =int(6/time_gap_in_hour)
+#             
+#             single_test_time_stamp = torch.tensor(list(range(time_stamp_count)))*time_gap_in_hour
+#             
+#             test_time_stamps = single_test_time_stamp.view(1,time_stamp_count)
+#             
+#             test_time_stamps = test_time_stamps.repeat(test_dataset.shape[0], 1)
+#             
+#             test_lens = torch.tensor(time_stamp_count)
+#         
+#             test_lens = test_lens.repeat(test_dataset.shape[0])
+#             
+#         else:
+#             
+#         
+# #             test_time_stamps = test_dataset[:,:,0]
+#             single_test_time_stamp = torch.tensor(list(range(mimic3_data_len)))
+#             
+#             test_time_stamps = single_test_time_stamp.view(1,mimic3_data_len)
+#             
+#             test_time_stamps = test_time_stamps.repeat(test_dataset.shape[0], 1)
+#             
+#             test_lens = torch.tensor(mimic3_data_len)
+#         
+#             test_lens = test_lens.repeat(test_dataset.shape[0])
+#             
+#             test_y = test_y[:,0:mimic3_data_len]
+#             
+#             masks_test = masks_test[:, 0:mimic3_data_len]
+#         
+# #             test_lens = torch.load(os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name) + '/mimic3_test_tensor_len0').type(torch.LongTensor)
+#         
+#         
+# #             if args.model in models_to_remove_none_time_stamps:
+# #             
+# #                 new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(train_y, masks_train, train_time_stamps, train_lens)
+# #                 
+# #                 new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(test_y, masks_test, test_time_stamps, test_lens)
+# #             
+# #             
+# #                 check_remove_none(train_y, new_train_y)
+# #             
+# #                 train_y = new_train_y
+# #                 
+# #                 test_y = new_test_y
+#         
+#         train_delta_time_stamps = train_time_stamps.clone()
+#         
+#         test_delta_time_stamps = test_time_stamps.clone()
+#         
+# #             if args.model == 'DHMM_cluster_tlstm':
+# #                 train_delta_time_stamps =  get_delta_time_stamps_all_dims(train_time_stamps)
+# #                 
+# #                 test_delta_time_stamps = get_delta_time_stamps_all_dims(test_time_stamps)
+# #             
+# #             if args.model == GRUD_method:
+# #                 train_delta_time_stamps = get_delta_time_stamps(masks_train, train_time_stamps)
+# #                 
+# #                 test_delta_time_stamps = get_delta_time_stamps(masks_test, test_time_stamps)
+#         
+# #             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
+#         
+#         assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
+# #             time_steps_extrap = dataset[:,:,0]
+#         
+# #             time_steps_extrap = torch.tensor(list(range(dataset.shape[1])))
+# 
+# 
+#         all_features_not_all_missing_values = get_features_with_one_value(masks_train.clone(), masks_train.clone())
+#         
+#         train_y = train_y[:,:,all_features_not_all_missing_values]
+#         
+#         masks_train = masks_train[:,:,all_features_not_all_missing_values]
+#         
+#         
+#         
+#         
+#         
+#         
+# #             train_y = train_y[train_lens >= min_time_series_len]
+# #             
+# #             train_time_stamps = train_time_stamps[train_lens >= min_time_series_len]
+# #             
+# #             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #                 train_delta_time_stamps = train_delta_time_stamps[train_lens >= min_time_series_len]
+# #             else:
+# #                 train_delta_time_stamps = train_time_stamps.clone()
+# #             
+# #             masks_train = masks_train[train_lens >= min_time_series_len]
+# #             
+# #             train_lens = train_lens[train_lens >= min_time_series_len]
+#         
+#         
+#         
+#         test_y = test_y[:,:,all_features_not_all_missing_values]
+#         
+#         
+#         
+#         masks_test = masks_test[:,:,all_features_not_all_missing_values]
+# 
+#         
+#         
+#         
+#         test_y = test_y[test_lens > 1]
+#         
+# #             if args.model == 'DHMM_cluster_tlstm' or args.model == GRUD_method:
+# #                 test_delta_time_stamps = test_delta_time_stamps[test_lens >= 1]
+# #             else:
+# #                 test_delta_time_stamps = test_time_stamps.clone()
+#         
+#         
+#         test_time_stamps = test_time_stamps[test_lens >= 1]
+#         
+#         masks_test = masks_test[test_lens > 1]
+#         
+#         test_lens = test_lens[test_lens > 1]
+# 
+# 
+# 
+# 
+#         train_y[train_y != train_y] = -1000
+#         
+#         test_y[test_y != test_y] = -1000
+#         
+#         args.n = train_y.shape[0] + test_y.shape[0]
+#         
+#         
+#         
+# #             train_y, test_y = split_train_test(dataset, train_fraq = 0.8)
+# 
+# #             masks_train = torch.ones_like(train_y)
+# 
+#         
+# #     
+# #             masks_test = torch.ones_like(test_y)
+#         train_y, masks_train = remove_outliers2(train_y, masks_train)
+#         test_y, masks_test = remove_outliers2(test_y, masks_test)
+# 
+#         origin_train_masks = masks_train.clone()
+#         
+#         origin_test_masks = masks_test.clone()
+# 
+# 
+#         random_train_masks = torch.ones_like(origin_train_masks)
+#         
+#         random_test_masks = torch.ones_like(origin_test_masks)
+# 
+#         train_y, test_y = standardize_dataset(train_y, test_y, masks_train, masks_test)
+# 
+#         masks_train, random_train_masks = add_random_missing_values(train_y, masks_train, args.missing_ratio, mimic3_data_train_len)
+#          
+#         masks_test, random_test_masks = add_random_missing_values(test_y, masks_test, args.missing_ratio, mimic3_data_train_len)
+#         
+#         
+# #             train_y, test_y = normalize_dataset(train_y, test_y, masks_train, masks_test)
+#         
+#         
+# 
+#         
+# #         dataset = normalize_dataset(dataset)
+# 
+# 
+# #         train_y = train_y.to(device)
+# #         
+# #         test_y = test_y.to(device)
+# #             assert torch.sum(masks_train) == torch.sum(1-np.isnan(train_y))
+# 
+#         
+# #             upper_id = 1060
+# #             
+# #             wrapped_train_y = MyDataset(train_y[0:upper_id], masks_train[0:upper_id], origin_train_masks[0:upper_id], random_train_masks[0:upper_id], train_lens[0:upper_id], train_time_stamps[0:upper_id], train_delta_time_stamps[0:upper_id])
+#         
+# #             if args.model == 'Linear_regression':
+# #                 
+# #                 train_y_copy = train_y.clone()
+# #                 
+# #                 test_y_copy = test_y.clone()
+# #                 
+# #                 train_y_copy[masks_train == 0] = 0
+# #                 test_y_copy[masks_test == 0] = 0
+# #                 
+# #                 print(torch.norm((train_y_copy - train_y)*masks_train))
+# #                 
+# #                 train_y = train_y_copy
+# #                 
+# #                 test_y = test_y_copy
+# #             
+# #             
+# #             if args.model == cluster_ODE_method or args.model == l_ODE_method:
+# #                 train_time_stamps = train_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+# #                 test_time_stamps = test_time_stamps.type(torch.float)/train_time_stamps.shape[1]
+#         
+#         wrapped_train_y, wrapped_valid_y = partition_validation_set(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#         
+# #         wrapped_train_y = MyDataset(train_y, masks_train, origin_train_masks, random_train_masks, train_lens, train_time_stamps, train_delta_time_stamps)
+#     
+#         wrapped_test_y = MyDataset(test_y, masks_test, origin_test_masks, random_test_masks, test_lens, test_time_stamps, test_delta_time_stamps)
+#         
+#         
+#         
+#         if not os.path.exists(data_folder):
+#             os.makedirs(data_folder)
+#             
+#         if not os.path.exists(data_folder + mimic3_data_dir):
+#             os.makedirs(data_folder + mimic3_data_dir)
+#         
+#         if not os.path.exists(os.path.join(data_folder + mimic3_data_dir, dataset_name)):
+#             os.makedirs(os.path.join(data_folder + mimic3_data_dir, dataset_name))
+#         
+#         torch.save(wrapped_train_y, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/dataset_train_y')
+#         
+#         torch.save(wrapped_test_y, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/dataset_test_y')
+#         
+#         torch.save(wrapped_valid_y, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/dataset_valid_y')
         
 #         torch.save(time_steps_extrap, os.path.join(data_folder + mimic3_data_dir, dataset_name) + '/time_steps')
         
@@ -2586,34 +2663,34 @@ def generate_new_time_series(args):
 #         return load_time_series_grui(args)
 
 def load_time_series_dataset(dataset_name):
-    if dataset_name.startswith('mimic3'):
-#         data_dir = mimic3_data_dir
-        data_dir = os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
-        
-        inference_len = mimic3_data_train_len
+#     if dataset_name.startswith('mimic3'):
+# #         data_dir = mimic3_data_dir
+#         data_dir = os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         
+#         test_data_file_name = 'dataset_test_y'
+#         
+#         inference_len = mimic3_data_train_len
+#         
+# #         time_steps_file_name = 'time_steps'
+#         
+#     if dataset_name.startswith('physionet'):
+# #         data_dir = climate_data_dir
+#         
+#         data_dir = os.path.join(data_folder, physionet_data_dir)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         
+#         test_data_file_name = 'dataset_test_y'
+#         
+#         inference_len = physionet_data_train_len
         
 #         time_steps_file_name = 'time_steps'
         
-    if dataset_name.startswith('physionet'):
-#         data_dir = climate_data_dir
-        
-        data_dir = os.path.join(data_folder, physionet_data_dir)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
-        
-        inference_len = physionet_data_train_len
-        
-#         time_steps_file_name = 'time_steps'
-        
-    if dataset_name.startswith('climate'):
+    if dataset_name.startswith(climate_data_name):
         data_dir = os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name)
         
         training_data_file_name = 'dataset_train_y'
@@ -2623,17 +2700,17 @@ def load_time_series_dataset(dataset_name):
         
         inference_len = climate_data_train_len
         
-    if dataset_name.startswith('beijing'):
-        data_dir = os.path.join(data_folder, beijing_data_dir)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
-        
-#         time_steps_file_name = 'time_steps'
-        
-        inference_len = beijing_data_train_len
+#     if dataset_name.startswith('beijing'):
+#         data_dir = os.path.join(data_folder, beijing_data_dir)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         
+#         test_data_file_name = 'dataset_test_y'
+#         
+# #         time_steps_file_name = 'time_steps'
+#         
+#         inference_len = beijing_data_train_len
     wrapped_train_y = torch.load(data_dir + '/' + training_data_file_name)
             
     wrapped_test_y = torch.load(data_dir + '/' + test_data_file_name) 
@@ -2729,34 +2806,38 @@ def load_time_series(args):
     
     inference_len = 0
     
-    if dataset_name.startswith('mimic3'):
-#         data_dir = mimic3_data_dir
-        data_dir = os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
-        
-        inference_len = mimic3_data_train_len
+#     if dataset_name.startswith('mimic3'):
+# #         data_dir = mimic3_data_dir
+#         data_dir = os.path.join(os.path.join(data_folder, mimic3_data_dir), dataset_name)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         
+#         test_data_file_name = 'dataset_test_y'
+#         
+#         valid_data_file_name = 'dataset_valid_y'
+#         
+#         inference_len = mimic3_data_train_len
+#         
+# #         time_steps_file_name = 'time_steps'
+#         
+#     if dataset_name.startswith('physionet'):
+# #         data_dir = climate_data_dir
+#         
+#         data_dir = os.path.join(data_folder, physionet_data_dir)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         
+#         test_data_file_name = 'dataset_test_y'
+#         
+#         valid_data_file_name = 'dataset_valid_y'
+#         
+#         inference_len = physionet_data_train_len
         
 #         time_steps_file_name = 'time_steps'
         
-    if dataset_name.startswith('physionet'):
-#         data_dir = climate_data_dir
-        
-        data_dir = os.path.join(data_folder, physionet_data_dir)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
-        
-        inference_len = physionet_data_train_len
-        
-#         time_steps_file_name = 'time_steps'
-        
-    if dataset_name.startswith('climate'):
+    if dataset_name.startswith(climate_data_name):
         data_dir = os.path.join(os.path.join(data_folder, climate_data_dir), dataset_name)
         
         training_data_file_name = 'dataset_train_y'
@@ -2764,20 +2845,25 @@ def load_time_series(args):
         
         test_data_file_name = 'dataset_test_y'
         
+        valid_data_file_name = 'dataset_valid_y'
+        
         inference_len = climate_data_train_len
         
-    if dataset_name.startswith('beijing'):
-        data_dir = os.path.join(data_folder, beijing_data_dir)
-        
-        training_data_file_name = 'dataset_train_y'
-        
-        
-        test_data_file_name = 'dataset_test_y'
+#     if dataset_name.startswith('beijing'):
+#         data_dir = os.path.join(data_folder, beijing_data_dir)
+#         
+#         training_data_file_name = 'dataset_train_y'
+#         
+#         valid_data_file_name = 'dataset_valid_y'
+#         
+#         test_data_file_name = 'dataset_test_y'
         
 #         time_steps_file_name = 'time_steps'
         
         inference_len = beijing_data_train_len
     wrapped_train_y = torch.load(data_dir + '/' + training_data_file_name)
+    
+    wrapped_valid_y = torch.load(data_dir + '/' + valid_data_file_name)
             
     wrapped_test_y = torch.load(data_dir + '/' + test_data_file_name) 
 
@@ -2786,70 +2872,74 @@ def load_time_series(args):
     is_missing = torch.sum(wrapped_train_y.mask) < (wrapped_train_y.mask.shape[0]*wrapped_train_y.mask.shape[1]*wrapped_train_y.mask.shape[2]) 
     
     
-    if not dataset_name == 'mimic3_17_5':
-        if args.model == cluster_ODE_method or args.model == l_ODE_method:
-            new_train_time_stamps = wrapped_train_y.time_stamps.type(torch.float)/wrapped_train_y.time_stamps.shape[1]
-            new_test_time_stamps = wrapped_test_y.time_stamps.type(torch.float)/wrapped_test_y.time_stamps.shape[1]
-            
-            wrapped_train_y.time_stamps = new_train_time_stamps
-            wrapped_test_y.time_stamps = new_test_time_stamps
+#     if not dataset_name == 'mimic3_17_5':
+    if args.model == cluster_ODE_method or args.model == l_ODE_method:
+        new_train_time_stamps = wrapped_train_y.time_stamps.type(torch.float)/wrapped_train_y.time_stamps.shape[1]
+        new_test_time_stamps = wrapped_test_y.time_stamps.type(torch.float)/wrapped_test_y.time_stamps.shape[1]
+        new_valid_time_stamps = wrapped_valid_y.time_stamps.type(torch.float)/wrapped_valid_y.time_stamps.shape[1]
+        
+        
+        
+        wrapped_train_y.time_stamps = new_train_time_stamps
+        wrapped_valid_y.time_stamps = new_valid_time_stamps
+        wrapped_test_y.time_stamps = new_test_time_stamps
         
     
-    if args.model == 'Linear_regression':
-                
-        train_y_copy = wrapped_train_y.data.clone()
-        
-        test_y_copy = wrapped_test_y.data.clone()
-        
-        train_y_copy[wrapped_train_y.mask == 0] = 0
-        test_y_copy[wrapped_test_y.mask == 0] = 0
-        
-        print(torch.norm((train_y_copy - wrapped_train_y.data)*wrapped_train_y.mask))
-        
-        wrapped_train_y.data = train_y_copy
-        
-        wrapped_test_y.data = test_y_copy
-        
-        
-        
-        train_y_copy = wrapped_train_y.origin_data.clone()
-        
-        test_y_copy = wrapped_test_y.origin_data.clone()
-        
-        train_y_copy[wrapped_train_y.origin_mask == 0] = 0
-        test_y_copy[wrapped_test_y.origin_mask == 0] = 0
-        
-        print(torch.norm((train_y_copy - wrapped_train_y.origin_data)*wrapped_train_y.origin_mask))
-        
-        wrapped_train_y.origin_data = train_y_copy
-        
-        wrapped_test_y.origin_data = test_y_copy
-    
-    
-    if args.model in models_to_remove_none_time_stamps:
-            
-        new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(wrapped_train_y.data, wrapped_train_y.mask, wrapped_train_y.time_stamps, wrapped_train_y.lens)
-        
-        new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(wrapped_test_y.data, wrapped_test_y.mask, wrapped_test_y.time_stamps, wrapped_test_y.lens)
-    
-    
-        check_remove_none(wrapped_train_y.data, new_train_y)
-    
-        wrapped_train_y.data = new_train_y
-        
-        wrapped_test_y.data = new_test_y
-        
-        wrapped_train_y.mask = masks_train
-        
-        wrapped_test_y.mask = masks_test
-        
-        wrapped_train_y.time_stamps = train_time_stamps
-        
-        wrapped_test_y.time_stamps = test_time_stamps
-    
-        wrapped_train_y.lens = train_lens
-        
-        wrapped_test_y.lens = test_lens    
+#     if args.model == 'Linear_regression':
+#                 
+#         train_y_copy = wrapped_train_y.data.clone()
+#         
+#         test_y_copy = wrapped_test_y.data.clone()
+#         
+#         train_y_copy[wrapped_train_y.mask == 0] = 0
+#         test_y_copy[wrapped_test_y.mask == 0] = 0
+#         
+#         print(torch.norm((train_y_copy - wrapped_train_y.data)*wrapped_train_y.mask))
+#         
+#         wrapped_train_y.data = train_y_copy
+#         
+#         wrapped_test_y.data = test_y_copy
+#         
+#         
+#         
+#         train_y_copy = wrapped_train_y.origin_data.clone()
+#         
+#         test_y_copy = wrapped_test_y.origin_data.clone()
+#         
+#         train_y_copy[wrapped_train_y.origin_mask == 0] = 0
+#         test_y_copy[wrapped_test_y.origin_mask == 0] = 0
+#         
+#         print(torch.norm((train_y_copy - wrapped_train_y.origin_data)*wrapped_train_y.origin_mask))
+#         
+#         wrapped_train_y.origin_data = train_y_copy
+#         
+#         wrapped_test_y.origin_data = test_y_copy
+#     
+#     
+#     if args.model in models_to_remove_none_time_stamps:
+#             
+#         new_train_y, masks_train, train_time_stamps, train_lens = remove_none_observations(wrapped_train_y.data, wrapped_train_y.mask, wrapped_train_y.time_stamps, wrapped_train_y.lens)
+#         
+#         new_test_y, masks_test, test_time_stamps, test_lens = remove_none_observations(wrapped_test_y.data, wrapped_test_y.mask, wrapped_test_y.time_stamps, wrapped_test_y.lens)
+#     
+#     
+#         check_remove_none(wrapped_train_y.data, new_train_y)
+#     
+#         wrapped_train_y.data = new_train_y
+#         
+#         wrapped_test_y.data = new_test_y
+#         
+#         wrapped_train_y.mask = masks_train
+#         
+#         wrapped_test_y.mask = masks_test
+#         
+#         wrapped_train_y.time_stamps = train_time_stamps
+#         
+#         wrapped_test_y.time_stamps = test_time_stamps
+#     
+#         wrapped_train_y.lens = train_lens
+#         
+#         wrapped_test_y.lens = test_lens    
     
     
 #     if args.model == 'DHMM_cluster_tlstm':
@@ -2861,15 +2951,15 @@ def load_time_series(args):
 #         
 #         wrapped_test_y.delta_time_stamps = test_delta_time_stamps
             
-    if args.model == GRUD_method:
-        train_delta_time_stamps = get_delta_time_stamps(wrapped_train_y.mask, wrapped_train_y.time_stamps)
-        
-        test_delta_time_stamps = get_delta_time_stamps(wrapped_test_y.mask, wrapped_test_y.time_stamps)
-    
-    
-        wrapped_train_y.delta_time_stamps = train_delta_time_stamps
-        
-        wrapped_test_y.delta_time_stamps = test_delta_time_stamps
+#     if args.model == GRUD_method:
+#         train_delta_time_stamps = get_delta_time_stamps(wrapped_train_y.mask, wrapped_train_y.time_stamps)
+#         
+#         test_delta_time_stamps = get_delta_time_stamps(wrapped_test_y.mask, wrapped_test_y.time_stamps)
+#     
+#     
+#         wrapped_train_y.delta_time_stamps = train_delta_time_stamps
+#         
+#         wrapped_test_y.delta_time_stamps = test_delta_time_stamps
     
 #             check_delta_time_stamps(masks_train, train_time_stamps, train_delta_time_stamps)
     
@@ -2883,21 +2973,26 @@ def load_time_series(args):
 
     print('training data size::', wrapped_train_y.data.shape)
     
+    print('validation data size::', wrapped_valid_y.data.shape)
+    
     print('test data size::', wrapped_test_y.data.shape)
 
 
-    print('inference missing ratio::', 1 - torch.mean(torch.cat([wrapped_train_y.mask[:, 0:inference_len], wrapped_test_y.mask[:, 0:inference_len]], 0)))
+    print('inference missing ratio::', 1 - torch.mean(torch.cat([wrapped_train_y.mask[:, 0:inference_len], wrapped_valid_y.mask[:, 0:inference_len], wrapped_test_y.mask[:, 0:inference_len]], 0)))
     
-    print('forecasting missing ratio::', 1 - torch.mean(torch.cat([wrapped_train_y.mask[:, inference_len:], wrapped_test_y.mask[:, inference_len:]], 0)))
+    print('forecasting missing ratio::', 1 - torch.mean(torch.cat([wrapped_train_y.mask[:, inference_len:], wrapped_valid_y.mask[:, inference_len:], wrapped_test_y.mask[:, inference_len:]], 0)))
 
     batch_size = args.batch_size
     train_dataloader = DataLoader(wrapped_train_y, batch_size = batch_size, shuffle=True,
+        collate_fn= lambda batch: basic_collate_fn(batch, args, data_type = "train"))
+    valid_dataloader = DataLoader(wrapped_valid_y, batch_size = batch_size, shuffle=True,
         collate_fn= lambda batch: basic_collate_fn(batch, args, data_type = "train"))
     test_dataloader = DataLoader(wrapped_test_y, batch_size = batch_size, shuffle=True,
         collate_fn= lambda batch: basic_collate_fn(batch, args, data_type = "test"))
     
     data_objects = {#"dataset_obj": dataset_obj, 
                 "train_dataloader": train_dataloader, 
+                "valid_dataloader": valid_dataloader,
                 "test_dataloader": test_dataloader,
                 "input_dim": input_dim,
                 "n_train_batches": len(train_dataloader),

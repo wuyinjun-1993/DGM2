@@ -427,6 +427,264 @@ def test(data_obj, model, is_GPU, device):
 #     return torch.cat(observed_test_data, 0), torch.cat(pred_test_data, 0), torch.cat(observed_test_mask, 0), torch.cat(pred_test_mask, 0), torch.cat(observed_test_lens, 0), torch.cat(pred_test_lens, 0)
 
 
+def validate(data_obj, model, is_GPU, device):
+    
+    
+    observed_test_data = []
+    
+    observed_test_mask = []
+    
+    observed_test_lens = []
+    
+    pred_test_data = []
+    
+    pred_test_mask = []
+    
+    pred_test_lens = []
+    
+    
+    final_rmse_loss = 0
+    
+    final_rmse_loss2 = 0
+    
+    final_mae_losses = 0
+    
+    final_mae_losses2 = 0
+    
+    final_nll_loss = 0
+    
+    final_nll_loss2 = 0
+    
+    all_count1 = 0
+    
+    all_count2 = 0
+    
+    
+    final_imputed_rmse_loss = 0
+    
+    final_imputed_mae_loss = 0
+
+
+    final_imputed_rmse_loss2 = 0
+    
+    final_imputed_mae_loss2 = 0
+   
+    all_count3 = 0
+    
+    all_count4 = 0
+    
+    all_count5 = 0
+    
+    forecasting_rmse_list = 0
+    
+    forecasting_mae_list = 0
+    
+    forecasting_rmse_list2 = 0
+    
+    forecasting_mae_list2 = 0
+    
+    forecasting_count = 0
+    
+    with torch.no_grad():
+    
+        for id, data_dict in enumerate(data_obj["valid_dataloader"]):    
+        
+        
+            batch_dict = data_dict
+                
+    #         curr_seq_len = len(batch_dict['observed_tp'])
+        
+            rmse_loss, rmse_loss_count, mae_losses, mae_loss_count, nll_loss, nll_loss_count, list_res, imputed_res = model.test_samples(Variable(batch_dict["observed_data"]), Variable(batch_dict["origin_observed_data"]), Variable(batch_dict['observed_mask']), Variable(batch_dict["observed_origin_mask"]), Variable(batch_dict["observed_new_mask"]), Variable(batch_dict['observed_lens']), Variable(batch_dict['data_to_predict']), Variable(batch_dict["origin_data_to_predict"]), Variable(batch_dict['mask_predicted_data']), Variable(batch_dict['origin_mask_predicted_data']), Variable(batch_dict['new_mask_predicted_data']), Variable(batch_dict['lens_to_predict']), is_GPU, device, batch_dict["delta_time_stamps"], batch_dict["delta_time_stamps_to_predict"], batch_dict["time_stamps"], batch_dict["time_stamps_to_predict"])
+            
+#             imputed_res = None
+            
+            all_count1 += rmse_loss_count
+    
+            all_count2 += mae_loss_count
+    
+#             print(type(rmse_loss))
+            if type(rmse_loss) is tuple and len(list(rmse_loss)) == 2:
+                
+                rmse_loss_list = list(rmse_loss)
+                
+                mae_loss_list = list(mae_losses)
+                
+                final_rmse_loss += (rmse_loss_list[0]**2)*rmse_loss_count
+                
+                final_mae_losses += (mae_loss_list[0])*mae_loss_count
+                
+                final_rmse_loss2 += (rmse_loss_list[1]**2)*rmse_loss_count
+                
+                final_mae_losses2 += (mae_loss_list[1])*mae_loss_count
+            
+            else:
+                final_rmse_loss += (rmse_loss**2)*rmse_loss_count
+                
+                final_mae_losses += (mae_losses)*mae_loss_count
+    
+            if nll_loss_count is not None:
+                
+                if type(nll_loss) is tuple and len(list(nll_loss)) == 2:
+                    nll_loss_list = list(nll_loss)
+                    
+                    final_nll_loss += (nll_loss_list[0])*nll_loss_count
+                    
+                    final_nll_loss2 += (nll_loss_list[1])*nll_loss_count
+                    
+                else:
+                    final_nll_loss += (nll_loss)*nll_loss_count
+                all_count3 += nll_loss_count
+            else:
+                final_nll_loss = None
+                
+                
+            if imputed_res is not None:
+                imputed_mae_res, imputed_mae_count, imputed_rmse_res, imputed_rmse_count = imputed_res
+                
+                if type(imputed_mae_res) is tuple:
+                    
+                    imputed_rmse_loss, imputed_rmse_loss2 = imputed_rmse_res
+                    
+                    imputed_mae_loss, imputed_mae_loss2 = imputed_mae_res
+                    
+                    final_imputed_rmse_loss += (imputed_rmse_loss ** 2)*imputed_rmse_count
+                
+                    final_imputed_mae_loss += (imputed_mae_loss)*imputed_mae_count
+                    
+                    final_imputed_rmse_loss2 += (imputed_rmse_loss2 ** 2)*imputed_rmse_count
+                
+                    final_imputed_mae_loss2 += (imputed_mae_loss2)*imputed_mae_count
+                else:
+                    
+                    final_imputed_rmse_loss += (imputed_rmse_res ** 2)*imputed_rmse_count
+                
+                    final_imputed_mae_loss += (imputed_mae_res)*imputed_mae_count
+                
+                all_count4 += imputed_rmse_count
+                
+                all_count5 += imputed_mae_count
+                
+                
+                
+            if type(list_res[0]) is tuple:
+                
+                curr_forecasting_rmse_list = list(list_res[0])[0]
+                
+                curr_forecasting_mae_list = list(list_res[1])[0]
+                
+                curr_forecasting_rmse_list2 = list(list_res[0])[1]
+                
+                curr_forecasting_mae_list2 = list(list_res[1])[1]
+                
+                curr_forecasting_count = list_res[2]
+                
+                forecasting_rmse_list += (curr_forecasting_rmse_list**2)*curr_forecasting_count
+                
+                forecasting_mae_list += curr_forecasting_mae_list*curr_forecasting_count
+                
+                forecasting_rmse_list2 += (curr_forecasting_rmse_list2**2)*curr_forecasting_count
+                
+                forecasting_mae_list2 += curr_forecasting_mae_list2*curr_forecasting_count
+                
+                forecasting_count += curr_forecasting_count
+                
+            else:
+                curr_forecasting_rmse_list = list_res[0]
+                
+                curr_forecasting_mae_list = list_res[1]
+                
+                curr_forecasting_count = list_res[2]
+                
+                forecasting_rmse_list += (curr_forecasting_rmse_list**2)*curr_forecasting_count
+                
+                forecasting_mae_list += curr_forecasting_mae_list*curr_forecasting_count
+                
+                forecasting_count += curr_forecasting_count
+    final_rmse_loss = torch.sqrt(final_rmse_loss/all_count1)
+    
+    final_mae_losses = final_mae_losses/all_count2
+    
+    final_rmse_loss2 = torch.sqrt(final_rmse_loss2/all_count1)
+    
+    final_mae_losses2 = final_mae_losses2/all_count2
+    
+    print('validation results::')
+    
+    print('validation forecasting rmse loss::', final_rmse_loss)
+        
+    print('validation forecasting mae loss::', final_mae_losses)
+
+    print('validation forecasting rmse loss 2::', final_rmse_loss2)
+        
+    print('validation forecasting mae loss 2::', final_mae_losses2)
+    
+    if final_nll_loss is not None:
+        final_nll_loss = final_nll_loss/all_count3
+        
+        final_nll_loss2 = final_nll_loss2/all_count3
+        
+        print('validation forecasting neg likelihood::', final_nll_loss)
+        
+        print('validation forecasting neg likelihood 2::', final_nll_loss2)  
+    
+    forecasting_rmse_list = torch.sqrt(forecasting_rmse_list/forecasting_count)
+    
+    forecasting_mae_list = forecasting_mae_list/forecasting_count
+
+
+    forecasting_rmse_list2 = torch.sqrt(forecasting_rmse_list2/forecasting_count)
+    
+    forecasting_mae_list2 = forecasting_mae_list2/forecasting_count
+    
+    print('validation forecasting rmse loss by time steps::')
+    
+    print(forecasting_rmse_list)
+    
+    print(forecasting_mae_list)
+    
+    print('validation forecasting rmse loss 2 by time steps::')
+    
+    print(forecasting_rmse_list2)
+    
+    print(forecasting_mae_list2)
+    
+    
+    if imputed_res is not None:
+        final_imputed_rmse_loss = torch.sqrt(final_imputed_rmse_loss/all_count4)
+        final_imputed_rmse_loss2 = torch.sqrt(final_imputed_rmse_loss2/all_count4)
+        final_imputed_mae_loss = (final_imputed_mae_loss/all_count5)
+        final_imputed_mae_loss2 = (final_imputed_mae_loss2/all_count5)
+    
+    print('validation imputation rmse loss::', final_imputed_rmse_loss)
+    
+    print('validation imputation mae loss::', final_imputed_mae_loss)
+    
+    print('validation imputation rmse loss 2::', final_imputed_rmse_loss2)
+    
+    print('validation imputation mae loss 2::', final_imputed_mae_loss2)
+    
+    if not os.path.exists(data_dir + output_dir):
+        os.makedirs(data_dir + output_dir)
+    torch.save(model, data_dir + output_dir + 'model')
+    
+    
+  
+#         observed_test_mask.append(batch_dict['observed_mask'])
+#         
+#         pred_test_mask.append(batch_dict['mask_predicted_data'])
+# 
+#         observed_test_data.append(batch_dict["observed_data"])
+#         
+#         pred_test_data.append(batch_dict['data_to_predict'])
+#         
+#         observed_test_lens.append(batch_dict['observed_lens'])
+#         
+#         pred_test_lens.append(batch_dict['lens_to_predict'])
+        
+    
+#     return torch.cat(observed_test_data, 0), torch.cat(pred_test_data, 0), torch.cat(observed_test_mask, 0), torch.cat(pred_test_mask, 0), torch.cat(observed_test_lens, 0), torch.cat(pred_test_lens, 0)
+
+
 def main(args):
     # setup logging
     
@@ -659,6 +917,7 @@ def main(args):
         if epoch % test_period == 0:
             print("test loss::")           
             
+            validate(data_obj, model, is_GPU, device)
 #             model.test_samples(batch_dict["observed_data"], batch_dict['data_to_predict'], batch_dict['tp_to_predict'], curr_seq_len, is_GPU, device)
             test(data_obj, model, is_GPU, device)
     
@@ -820,7 +1079,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="parse args")
     parser.add_argument('--model', type=str, default='DHMM_cluster', help='model name')
     parser.add_argument('--dataset', type=str, default='climate_NY', help='name of dataset')
-    parser.add_argument('--extrap', action='store_true', help="Set extrapolation mode. If this flag is not set, run interpolation mode.")
+#     parser.add_argument('--extrap', action='store_true', help="Set extrapolation mode. If this flag is not set, run interpolation mode.")
 
     parser.add_argument('-std',  type=float, default=0.5, help="std of the initial phi table")
     parser.add_argument('-b', '--batch-size', type=int, default=40)
