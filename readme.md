@@ -1,5 +1,23 @@
 The code for the paper "Dynamic Gaussian Mixture based Deep Generative Model ForRobust Forecasting on Sparse Multivariate Time Series" submitted to AAAI 2021
 
+
+Prerequisites:
+install conda, pytorch, matplotlib, pandas, scikit-learn tensorboardX, torchdiffeq (see the instructions in https://github.com/rtqichen/torchdiffeq)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Instructions on how to use the code by using the dataset USHCN as an example:
 1. preprocessing the data for forecasting with the following commands in the terminal (--dataset specifies the name of the dataset while -ms specifies the missing ratio for the dataset, e.g. -ms 0.5 means that 50% of the observations are randomly removed from the dataset before the forecasting task):
 
