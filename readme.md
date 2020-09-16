@@ -1,12 +1,12 @@
-The code for the paper "Dynamic Gaussian Mixture based Deep Generative Model ForRobust Forecasting on Sparse Multivariate Time Series" submitted to AAAI 2021
+# The code for the paper "Dynamic Gaussian Mixture based Deep Generative Model ForRobust Forecasting on Sparse Multivariate Time Series" submitted to AAAI 2021
 
 
-##Prerequisites:
+## Prerequisites:
 install conda, pytorch, matplotlib, pandas, scikit-learn tensorboardX, torchdiffeq (see the instructions in https://github.com/rtqichen/torchdiffeq)
 
 
 
-##Instructions on how to use the code to do the forecasting tasks on the USHCN, KDD_CUP and MIMIC-III dataset:
+## Instructions on how to use the code to do the forecasting tasks on the USHCN, KDD_CUP and MIMIC-III dataset:
 1. preprocessing the data for forecasting with the following commands in the terminal:
 
 
