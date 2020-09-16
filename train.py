@@ -742,6 +742,8 @@ def main(args):
     
     data_obj, is_missing, train_mean = load_time_series(args)
 
+    config['cluster_num'] = args.cluster_num
+
     config['input_dim'] = data_obj['input_dim']
     
     config['phi_std'] = args.std
@@ -863,7 +865,7 @@ def main(args):
     
     
     
-    wait_until_kl_inc = 0
+    wait_until_kl_inc = args.wait_epoch
     
     wait_until_gumbel = 0
     
@@ -1132,12 +1134,15 @@ if __name__ == '__main__':
 
     parser.add_argument('-std',  type=float, default=0.5, help="std of the initial phi table")
     parser.add_argument('-b', '--batch-size', type=int, default=40)
+    parser.add_argument('--wait_epoch', type=int, default=0)
     parser.add_argument('-e', '--epochs', type=int, default=500)
     parser.add_argument('--use_gate', action='store_true', help = 'use gate in the model')
 
     parser.add_argument('--GPU', action='store_true', help="GPU flag")
     
     parser.add_argument('-G', '--GPUID', type = int, help="GPU ID")
+    
+    parser.add_argument('--cluster_num', type = int, default = 20,  help="number of clusters")
     
     parser.add_argument('--max_kl', type = float, default = 1.0, help="max kl coefficient")
     

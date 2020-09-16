@@ -25,7 +25,7 @@ from torch.utils.data import Dataset, DataLoader
 
 data_dir = 'dataset_dir/'
 synthetic_sub_data_dir = 'synthetic_data/' 
-mimic3_data_dir = 'mimic3_data/'
+mimic3_data_dir = 'mimic3/'
 beijing_data_dir = 'KDDCUP'
 climate_data_dir = 'climate/tensor/'
 physionet_data_dir = 'physionet/'
@@ -48,6 +48,8 @@ cluster_method = 'DGM2_L'
 climate_data_name = 'USHCN'
 
 kddcup_data_name = 'KDDCUP'
+
+mimic_data_name = 'MIMIC3'
 
 l_ODE_method = 'L_ODE'
 
