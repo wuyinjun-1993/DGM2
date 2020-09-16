@@ -50,7 +50,6 @@ sys.path.append(os.path.abspath(__file__))
 
 # print(os.path.dirname(os.path.abspath(__file__)) + '/lib')
 
-from data.periodic import *
 
 from data.generate_time_series import *
 

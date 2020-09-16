@@ -25,7 +25,7 @@ from torch.utils.data import Dataset, DataLoader
 data_dir = 'dataset_dir/'
 synthetic_sub_data_dir = 'synthetic_data/' 
 mimic3_data_dir = 'mimic3_data/'
-beijing_data_dir = 'beijing_air'
+beijing_data_dir = 'KDDCUP'
 climate_data_dir = 'climate/tensor/'
 physionet_data_dir = 'physionet/'
 output_dir = 'output/'
@@ -39,9 +39,9 @@ GRUD_method = 'GRUD'
 
 LODE_method = 'L_ODE'
 
-cluster_ODE_method = 'DGM2_ODE'
+cluster_ODE_method = 'DGM2_O'
 
-cluster_method = 'DGM2'
+cluster_method = 'DGM2_L'
 
 l_ODE_method = 'L_ODE'
 
