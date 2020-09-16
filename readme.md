@@ -47,9 +47,9 @@ python3 generate_time_series.py --dataset KDDCUP
 
 --gaussian: the parameter gamma to balance the dynamic component and the basis mixture component in the dynamic gaussian mixture distribution, which will take effect when --use_gate is not used
 
-Running examples on USHCN dataset:
+### Running examples on USHCN dataset:
 
-with GPU (suppose the GPU ID is 0) and gate function:
+#### with GPU (suppose the GPU ID is 0) and gate function:
 
 
 
@@ -117,7 +117,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --
 
 
 
-Running examples on KDDCUP dataset:
+### Running examples on KDDCUP dataset:
 
 with GPU (suppose the GPU ID is 0) and gate function:
 ```
