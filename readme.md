@@ -12,17 +12,17 @@ install conda, pytorch, matplotlib, pandas, scikit-learn tensorboardX, torchdiff
 
 To generate data for forecasting on USHCN dataset:
 
-cd data/
-
 ```
+cd data/
 python3 generate_time_series.py --dataset USHCN
 ```
 
 To generate data for forecasting on KDDCUP dataset:
 
+```
 cd data/
 python3 generate_time_series.py --dataset KDDCUP
-
+```
 
 
 
@@ -43,52 +43,51 @@ Running examples on USHCN dataset:
 
 with GPU (suppose the GPU ID is 0) and gate function:
 
+```
 python3 train.py --dataset USHCN --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate
-
+```
 
 
 
 without GPU but using gate function:
-python3 train.py --dataset USHCN --model DGM2 -b 100 --epochs 50 --max_kl 5 --use_gate
 
+```
+python3 train.py --dataset USHCN --model DGM2 -b 100 --epochs 50 --max_kl 5 --use_gate
+```
 
 with GPU (suppose the GPU ID is 0) but without using gate function:
 
+```
 python3 train.py --dataset USHCN --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001
-
+```
 
 without GPU but using gate function:
+```
 python3 train.py --dataset USHCN --model DGM2 -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
-
+```
 
 
 Running examples on KDDCUP dataset:
 
 with GPU (suppose the GPU ID is 0) and gate function:
-
+```
 python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate
-
+```
 
 without GPU but using gate function:
+```
 python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --max_kl 5 --use_gate
-
+```
 
 with GPU (suppose the GPU ID is 0) but without using gate function:
-
+```
 python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001
-
+```
 
 without GPU but using gate function:
+```
 python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
-
-
-
-
-
-
-
-
-
+```
 
 
 
