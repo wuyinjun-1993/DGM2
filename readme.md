@@ -66,7 +66,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID
 ```
 
 
-without GPU but using gate function:
+#### without GPU but using gate function:
 
 use DGM2_L:
 
@@ -82,7 +82,7 @@ use DHM2_O:
 python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --use_gate
 ```
 
-with GPU (suppose the GPU ID is 0) but without using gate function:
+#### with GPU (suppose the GPU ID is 0) but without using gate function:
 
 
 use DGM2_L:
@@ -101,7 +101,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID
 
 
 
-without GPU but using gate function:
+#### without GPU but using gate function:
 
 use DGM2_L
 ```
@@ -119,25 +119,65 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --
 
 ### Running examples on KDDCUP dataset:
 
-with GPU (suppose the GPU ID is 0) and gate function:
+#### with GPU (suppose the GPU ID is 0) and gate function:
+
+use DGM2_L
 ```
-python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate
+python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --use_gate
 ```
 
-without GPU but using gate function:
+or
+
+use DGM2_O:
 ```
-python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --max_kl 5 --use_gate
+python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --use_gate
 ```
 
-with GPU (suppose the GPU ID is 0) but without using gate function:
+#### without GPU but using gate function:
+
+use DGM2_L:
 ```
-python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001
+python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --max_kl 3 --use_gate
 ```
 
-without GPU but using gate function:
+or 
+
+use DGM2_O:
 ```
-python3 train.py --dataset KDDCUP --model DGM2 -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
+python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --max_kl 3 --use_gate
 ```
 
+
+
+
+#### with GPU (suppose the GPU ID is 0) but without using gate function:
+
+
+use DGM2_L:
+```
+python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --gaussian 0.001
+```
+
+or 
+
+use DGM2_O:
+```
+python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --gaussian 0.001
+```
+
+
+#### without GPU but using gate function:
+
+use DGM2_L:
+```
+python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --max_kl 3 --gaussian 0.001
+```
+
+or
+
+use DGM2_O:
+```
+python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --max_kl 3 --gaussian 0.001
+```
 
 
