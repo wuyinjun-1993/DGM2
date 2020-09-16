@@ -408,7 +408,7 @@ def test(data_obj, model, is_GPU, device):
         os.makedirs(data_dir + output_dir)
     torch.save(model, data_dir + output_dir + 'model')
     
-    
+    return (final_rmse_loss, final_mae_losses, final_rmse_loss2, final_mae_losses2, final_imputed_rmse_loss, final_imputed_mae_loss, final_imputed_rmse_loss2, final_imputed_mae_loss2)
   
 #         observed_test_mask.append(batch_dict['observed_mask'])
 #         
@@ -666,7 +666,7 @@ def validate(data_obj, model, is_GPU, device):
         os.makedirs(data_dir + output_dir)
     torch.save(model, data_dir + output_dir + 'model')
     
-    
+    return final_rmse_loss
   
 #         observed_test_mask.append(batch_dict['observed_mask'])
 #         
@@ -683,6 +683,36 @@ def validate(data_obj, model, is_GPU, device):
     
 #     return torch.cat(observed_test_data, 0), torch.cat(pred_test_data, 0), torch.cat(observed_test_mask, 0), torch.cat(pred_test_mask, 0), torch.cat(observed_test_lens, 0), torch.cat(pred_test_lens, 0)
 
+def print_test_res(test_res):
+    
+    final_rmse_loss, final_mae_losses, final_rmse_loss2, final_mae_losses2, final_imputed_rmse_loss, final_imputed_mae_loss, final_imputed_rmse_loss2, final_imputed_mae_loss2 = test_res
+    
+    print('test results::')
+    
+    print('test forecasting rmse loss::', final_rmse_loss)
+        
+    print('test forecasting mae loss::', final_mae_losses)
+
+    print('test forecasting rmse loss 2::', final_rmse_loss2)
+        
+    print('test forecasting mae loss 2::', final_mae_losses2)
+    
+    print('test imputation rmse loss::', final_imputed_rmse_loss)
+    
+    print('test imputation mae loss::', final_imputed_mae_loss)
+    
+    print('test imputation rmse loss 2::', final_imputed_rmse_loss2)
+    
+    print('test imputation mae loss 2::', final_imputed_mae_loss2)
+    
+#     if final_nll_loss is not None:
+#         final_nll_loss = final_nll_loss/all_count3
+#         
+#         final_nll_loss2 = final_nll_loss2/all_count3
+        
+#     print('test forecasting neg likelihood::', final_nll_loss)
+#     
+#     print('test forecasting neg likelihood 2::', final_nll_loss2)  
 
 def main(args):
     # setup logging
@@ -849,6 +879,10 @@ def main(args):
     rec_anneal = 0
     
     
+    all_valid_rmse_list = []
+    
+    all_test_res = []
+    
     for epoch in range(config['epochs']):
     
 #         for itr in range(1, config['batch_size'] * (args.niters + 1)):
@@ -916,18 +950,34 @@ def main(args):
         if epoch % test_period == 0:
             print("test loss::")           
             
-            validate(data_obj, model, is_GPU, device)
+            valid_rmse = validate(data_obj, model, is_GPU, device)
+            
+            all_valid_rmse_list.append(valid_rmse)
+            
 #             model.test_samples(batch_dict["observed_data"], batch_dict['data_to_predict'], batch_dict['tp_to_predict'], curr_seq_len, is_GPU, device)
-            test(data_obj, model, is_GPU, device)
+#             final_rmse_loss, final_mae_losses, final_rmse_loss2, final_mae_losses2, final_imputed_rmse_loss, final_imputed_mae_loss, final_imputed_rmse_loss2, final_imputed_mae_loss2
+
+            test_res = test(data_obj, model, is_GPU, device)
     
+            
+            all_test_res.append(test_res)
 #         if args.model == 'DHMM_cluster4' or args.model == 'DHMM_cluster2':
 #             updated_centroids = init_kmeans.update_cluster(model)
 #             
 #             model.init_phi_table(updated_centroids, False)
     
+    all_valid_rmse_array = np.array(all_valid_rmse_list)
+    
+    selected_id = np.argmin(all_valid_rmse_array)
+    
+    selected_test_res = all_test_res[selected_id]
+    
+    
     print('final test loss::')
     
-    test(data_obj, model, is_GPU, device)
+    print_test_res(selected_test_res)
+    
+#     test(data_obj, model, is_GPU, device)
     
 #     if args.missing_ratio > 0:
 #         print('final imputation errors::')

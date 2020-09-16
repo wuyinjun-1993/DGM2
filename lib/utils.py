@@ -19,6 +19,7 @@ import sklearn as sk
 import subprocess
 import datetime
 from torch.utils.data import Dataset, DataLoader
+# from data.generate_time_series import climate_data_name, kddcup_data_name
 
 
 
@@ -42,6 +43,11 @@ LODE_method = 'L_ODE'
 cluster_ODE_method = 'DGM2_O'
 
 cluster_method = 'DGM2_L'
+
+
+climate_data_name = 'USHCN'
+
+kddcup_data_name = 'KDDCUP'
 
 l_ODE_method = 'L_ODE'
 
@@ -269,10 +275,10 @@ def split_data_extrap(data_dict, dataset = ""):
     if dataset == 'mimic3_17_5':
         n_observed_tps[:] = 48
         
-    if dataset.startswith('climate'):
+    if dataset.startswith(climate_data_name):
         n_observed_tps[:] = climate_data_train_len
         
-    if dataset.startswith('beijing'):
+    if dataset.startswith(kddcup_data_name):
         n_observed_tps[:] = beijing_data_train_len
 #     if dataset.startswith("mimic3"):
 #         

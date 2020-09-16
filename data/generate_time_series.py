@@ -35,9 +35,7 @@ from scipy.stats import iqr
 
 min_time_series_len = 10
 
-climate_data_name = 'USHCN'
 
-kddcup_data_name = 'KDDCUP'
 
 
 data_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/" + data_dir
