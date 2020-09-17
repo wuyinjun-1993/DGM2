@@ -1,5 +1,5 @@
-from models.DGM2 import DGM2
-from models.DGM2_ODE import DGM2_ODE
+from models.DGM2_L import DGM2_L
+from models.DGM2_O import DGM2_O
 # from models.dhmm_cluster2 import DHMM_cluster2
 # from models.dhmm_cluster3 import DHMM_cluster3
 # from models.dhmm_cluster4 import DHMM_cluster4

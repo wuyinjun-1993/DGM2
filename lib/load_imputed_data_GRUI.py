@@ -5,7 +5,7 @@ Created on Sep 4, 2020
 import os
 import random
 import argparse
-from lib.utils import GRUI_train_dir
+# from lib.utils import GRUI_train_dir
 
 import torch
 
@@ -137,27 +137,27 @@ class ReadImputedData:
             yield  x,y,[0.0]*len(self.x[0][0]),m,delta,x_lengths,x,0,0,0
             
             
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(description="parse args")
-    
-    dataset_name = 'mimic3_17'
-    
-    datapath = '../' + GRUI_train_dir + "/" + dataset_name
-    
-    print(datapath) 
-    
-    imputed_data = ReadImputedData(datapath)
-    
-    imputed_data.load()
-    
-    x_train = torch.tensor(imputed_data.x)
-    
-    mask_train = torch.tensor(imputed_data.m)
-    
-    delta_t_train = torch.tensor(imputed_data.delta)
-    
-    print(x_train.shape)
+# if __name__ == '__main__':
+# 
+#     parser = argparse.ArgumentParser(description="parse args")
+#     
+#     dataset_name = 'mimic3_17'
+#     
+#     datapath = '../' + GRUI_train_dir + "/" + dataset_name
+#     
+#     print(datapath) 
+#     
+#     imputed_data = ReadImputedData(datapath)
+#     
+#     imputed_data.load()
+#     
+#     x_train = torch.tensor(imputed_data.x)
+#     
+#     mask_train = torch.tensor(imputed_data.m)
+#     
+#     delta_t_train = torch.tensor(imputed_data.delta)
+#     
+#     print(x_train.shape)
     
     
     

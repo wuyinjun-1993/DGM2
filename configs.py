@@ -1,6 +1,6 @@
 
 
-def config_DGM2_ODE():
+def config_DGM2_O():
     conf = {
  
 # Model Arguments
@@ -40,7 +40,7 @@ def config_DGM2_ODE():
     }
     return conf 
 
-def config_DGM2():
+def config_DGM2_L():
     conf = {
  
 # Model Arguments

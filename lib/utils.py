@@ -19,13 +19,14 @@ import sklearn as sk
 import subprocess
 import datetime
 from torch.utils.data import Dataset, DataLoader
+# from data.generate_time_series import climate_data_name, kddcup_data_name
 
 
 
 data_dir = 'dataset_dir/'
 synthetic_sub_data_dir = 'synthetic_data/' 
-mimic3_data_dir = 'mimic3_data/'
-beijing_data_dir = 'beijing_air'
+mimic3_data_dir = 'mimic3/'
+beijing_data_dir = 'KDDCUP'
 climate_data_dir = 'climate/tensor/'
 physionet_data_dir = 'physionet/'
 output_dir = 'output/'
@@ -39,9 +40,16 @@ GRUD_method = 'GRUD'
 
 LODE_method = 'L_ODE'
 
-cluster_ODE_method = 'DGM2_ODE'
+cluster_ODE_method = 'DGM2_O'
 
-cluster_method = 'DGM2'
+cluster_method = 'DGM2_L'
+
+
+climate_data_name = 'USHCN'
+
+kddcup_data_name = 'KDDCUP'
+
+mimic_data_name = 'MIMIC3'
 
 l_ODE_method = 'L_ODE'
 
@@ -269,10 +277,10 @@ def split_data_extrap(data_dict, dataset = ""):
     if dataset == 'mimic3_17_5':
         n_observed_tps[:] = 48
         
-    if dataset.startswith('climate'):
+    if dataset.startswith(climate_data_name):
         n_observed_tps[:] = climate_data_train_len
         
-    if dataset.startswith('beijing'):
+    if dataset.startswith(kddcup_data_name):
         n_observed_tps[:] = beijing_data_train_len
 #     if dataset.startswith("mimic3"):
 #         
