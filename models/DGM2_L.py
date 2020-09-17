@@ -135,7 +135,7 @@ class DGM2_L(nn.Module):
         
 #         self.temp = config['temp_init']
         
-        self.transfer_prob = True
+        self.transfer_prob = False
         
         self.gaussian_prior_coeff = config['gaussian']
         
@@ -1155,7 +1155,7 @@ class DGM2_L(nn.Module):
                 
                 
                 
-            z_t, z_t_category_infer, _ , z_category_infer_sparse= self.postnet(z_t_transfer, curr_rnn_output, self.phi_table, t, self.temp)
+            z_t, z_t_category_infer, _ , z_category_infer_sparse= self.postnet(z_t_transfer, curr_rnn_output, self.phi_table, t)
 #                 output, (h_now, c_now) = self.trans(phi_z_infer.view(phi_z_infer.shape[0], 1, phi_z_infer.shape[1]).contiguous(), (h_prev.contiguous(), c_prev.contiguous()))# p(z_t| z_{t-1})
         else:
             
@@ -1169,7 +1169,7 @@ class DGM2_L(nn.Module):
 #                     output, (h_now, c_now) = self.trans(z_t.view(z_t.shape[0], 1, z_t.shape[1]), (h_prev.contiguous(), c_prev.contiguous()))# p(z_t| z_{t-1})
                 output, (h_now, c_now) = self.trans(phi_z_infer.view(phi_z_infer.shape[0], 1, phi_z_infer.shape[1]).contiguous(), (h_prev.contiguous(), c_prev.contiguous()))# p(z_t| z_{t-1})
             
-            z_t, z_t_category_infer, _,z_category_infer_sparse = self.postnet(phi_z_infer, curr_rnn_output, self.phi_table, t, self.temp)
+            z_t, z_t_category_infer, _,z_category_infer_sparse = self.postnet(phi_z_infer, curr_rnn_output, self.phi_table, t)
         
         for k in range(self.cluster_num):
             full_rec_loss += curr_full_rec_loss[k]*updated_joint_probs[:,k].view(curr_full_rec_loss[k].shape[0],1)
@@ -1352,7 +1352,7 @@ class DGM2_L(nn.Module):
             
             
             phi_z_infer2 = torch.mm(z_t_transfer_infer, torch.t(self.phi_table))
-            z_t, z_t_category_infer, _,z_category_infer_sparse = self.postnet(phi_z_infer2, curr_rnn_output, self.phi_table, t, self.temp)
+            z_t, z_t_category_infer, _,z_category_infer_sparse = self.postnet(phi_z_infer2, curr_rnn_output, self.phi_table, t)
         
         
         
@@ -1518,7 +1518,7 @@ class DGM2_L(nn.Module):
             
             '''phi_z_infer: phi_{z_t}'''
             if t == 0:
-                z_t, z_t_category_infer, _, z_category_infer_sparse = self.postnet(z_prev, curr_rnn_out, self.phi_table, t, self.temp) #q(z_t | z_{t-1}, x_{t:T})
+                z_t, z_t_category_infer, _, z_category_infer_sparse = self.postnet(z_prev, curr_rnn_out, self.phi_table, t) #q(z_t | z_{t-1}, x_{t:T})
                 
                 joint_probs[t] = z_t_category_infer
                 
@@ -4867,7 +4867,7 @@ class DGM2_L(nn.Module):
 #             z_prior, z_prior_mu, z_prior_logvar = self.trans(z_prev)# p(z_t| z_{t-1})
             
             '''phi_z_infer: phi_{z_t}'''
-            z_t, z_t_category_infer, _, z_category_infer_sparse = self.postnet(z_prev, curr_rnn_out, self.phi_table, t, self.temp) #q(z_t | z_{t-1}, x_{t:T})
+            z_t, z_t_category_infer, _, z_category_infer_sparse = self.postnet(z_prev, curr_rnn_out, self.phi_table, t) #q(z_t | z_{t-1}, x_{t:T})
             
             phi_z_infer = torch.mm(z_t, torch.t(self.phi_table))
 #             phi_z_infer = torch.mm(z_t_category_infer, torch.t(self.phi_table))
@@ -5718,7 +5718,7 @@ class DGM2_L(nn.Module):
         for t in range(T_max):
 #             z_prior, z_prior_mu, z_prior_logvar = self.trans(z_prev)# p(z_t| z_{t-1})
 
-            z_t, z_t_category_infer, phi_z_infer, z_category_infer_sparse = self.postnet(z_prev, curr_rnn, self.phi_table, t, self.temp) #q(z_t | z_{t-1}, x_{t:T})
+            z_t, z_t_category_infer, phi_z_infer, z_category_infer_sparse = self.postnet(z_prev, curr_rnn, self.phi_table, t) #q(z_t | z_{t-1}, x_{t:T})
     
 #                 rec_loss = torch.norm(x[:,t+1,:] - mean)**2/(2*std**2) + torch.log(2*np.pi*std**2)/2
                 
@@ -5941,7 +5941,7 @@ class DGM2_L(nn.Module):
         for t in range(T_max):
 #             z_prior, z_prior_mu, z_prior_logvar = self.trans(z_prev)# p(z_t| z_{t-1})
 
-            z_t, z_t_category_infer, phi_z_infer, z_category_infer_sparse = self.postnet(z_prev, curr_rnn, self.phi_table, t, self.temp) #q(z_t | z_{t-1}, x_{t:T})
+            z_t, z_t_category_infer, phi_z_infer, z_category_infer_sparse = self.postnet(z_prev, curr_rnn, self.phi_table, t) #q(z_t | z_{t-1}, x_{t:T})
     
 #                 rec_loss = torch.norm(x[:,t+1,:] - mean)**2/(2*std**2) + torch.log(2*np.pi*std**2)/2
                 
