@@ -98,7 +98,7 @@ Generate processed MIMIC3 dataset for forecasting:
 cd dataset_dir/
 unzip mimic3.zip
 cd data/
-python3 generate_time_series.py --dataset KDDCUP
+python3 generate_time_series.py --dataset MIMIC3
 ```
 
 Run demo code:
