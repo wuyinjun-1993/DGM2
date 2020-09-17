@@ -101,7 +101,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID
 
 
 
-#### without GPU but using gate function:
+#### without GPU or using gate function:
 
 use DGM2_L
 ```
@@ -114,6 +114,94 @@ use DGM2_O:
 ```
 python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+### Running examples on MIMIC3 dataset:
+
+#### with GPU (suppose the GPU ID is 0) and gate function:
+
+
+
+use DGM2_L:
+```
+python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --GPU --GPUID 0 --max_kl 5 --use_gate --wait_epoch 40
+```
+
+or
+
+use DGM2_O:
+```
+python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --GPU --GPUID 0 --max_kl 6 --use_gate --wait_epoch 60
+```
+
+
+#### without GPU but using gate function:
+
+use DGM2_L:
+
+```
+python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --max_kl 5 --use_gate --wait_epoch 40
+```
+
+or
+
+use DHM2_O:
+
+```
+python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --max_kl 6 --use_gate --wait_epoch 60
+```
+
+#### with GPU (suppose the GPU ID is 0) but without using gate function:
+
+
+use DGM2_L:
+```
+python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001 --wait_epoch 40
+```
+
+
+or
+
+use DGM2_O:
+
+```
+python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --GPU --GPUID 0 --max_kl 6 --gaussian 0.001 --wait_epoch 60
+```
+
+
+#### without GPU or using gate function:
+
+use DGM2_L
+```
+python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --max_kl 5 --gaussian 0.001 --wait_epoch 40
+```
+
+or
+
+use DGM2_O:
+```
+python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --max_kl 6 --gaussian 0.001 --wait_epoch 60
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -166,7 +254,7 @@ python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --GPU --GPU
 ```
 
 
-#### without GPU but using gate function:
+#### without GPU or using gate function:
 
 use DGM2_L:
 ```
