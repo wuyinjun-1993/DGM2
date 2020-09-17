@@ -69,7 +69,10 @@ python3 generate_time_series.py --dataset KDDCUP
 
 In what follows, we use USHCN as a running example to show how we run the forecasting program:
 
-### with GPU (suppose the GPU ID is 0) and gate function:
+
+### Running example on USHCN dataset
+
+#### with GPU (suppose the GPU ID is 0) and gate function:
 
 
 
@@ -86,7 +89,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID
 ```
 
 
-### without GPU but using gate function:
+#### without GPU but using gate function:
 
 use DGM2_L:
 
@@ -109,7 +112,7 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --
 
 
 
-
+### Running forecasting program on other datasets:
 
 
 Similarly, we can use the following command to run the forecasting program on MIMIC3 and KDDCUP dataset:
