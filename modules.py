@@ -13,10 +13,6 @@ import sys
 from torch.autograd import Variable
 import math
 
-# from Sparsemax.Sparsemax import *
-# 
-# sparsemax = Sparsemax(dim=-1)
-
 
 
 parentPath = os.path.abspath("..")

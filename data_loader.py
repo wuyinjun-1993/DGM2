@@ -1,17 +1,3 @@
-"""
-Data loader logic with two main responsibilities:
-(i)  download raw data and process; this logic is initiated upon import
-(ii) helper functions for dealing with mini-batches, sequence packing, etc.
-
-Data are taken from
-
-Boulanger-Lewandowski, N., Bengio, Y. and Vincent, P.,
-"Modeling Temporal Dependencies in High-Dimensional Sequences: Application to
-Polyphonic Music Generation and Transcription"
-
-however, the original source of the data seems to be the Institut fuer Algorithmen
-und Kognitive Systeme at Universitaet Karlsruhe.
-"""
 
 import os
 

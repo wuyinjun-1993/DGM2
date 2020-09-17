@@ -9,11 +9,6 @@ def get_logger(log_file):
         logging.info(s)
     return log
 
-######################################################################
-# This is a helper function to print time elapsed and estimated time
-# remaining given the current time and progress %.
-#
-
 import time
 import math
 import numpy as np

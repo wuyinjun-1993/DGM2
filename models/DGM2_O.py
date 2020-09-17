@@ -1,14 +1,3 @@
-"""
-An implementation of a Deep Markov Model in Pyro based on reference [1].
-
-Adopted from https://github.com/uber/pyro/tree/dev/examples/dmm  
-         and https://github.com/clinicalml/structuredinference
-
-Reference:
-
-[1] Structured Inference Networks for Nonlinear State Space Models [arXiv:1609.09869]
-    Rahul G. Krishnan, Uri Shalit, David Sontag
-"""
 
 import argparse
 import time

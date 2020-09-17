@@ -11,9 +11,7 @@ import torch
 
 class ReadImputedData:
     def __init__(self, dataPath ):
-        #一个文件一个batch，但需要注意，x,y,delta之间的匹配
-        #例子： batch1y,batch1x,batch1delta
-        #batchid从1开始
+
         self.files = os.listdir(dataPath)
         self.dataPath=dataPath
         self.count=int(len(self.files)/3)

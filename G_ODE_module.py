@@ -5,7 +5,6 @@ from torchdiffeq import odeint
 
 from torch.nn.utils.rnn import pack_padded_sequence
 
-# GRU-ODE: Neural Negative Feedback ODE with Bayesian jumps
 
 class GRUODECell(torch.nn.Module):
     def __init__(self, input_size, hidden_size, bias=True):

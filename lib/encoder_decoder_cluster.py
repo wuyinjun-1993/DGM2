@@ -1,7 +1,4 @@
-###########################
-# Latent ODEs for Irregularly-Sampled Time Series
-# Author: Yulia Rubanova
-###########################
+
 
 import numpy as np
 import torch
@@ -13,11 +10,8 @@ import lib.utils as utils
 from torch.nn.modules.rnn import LSTM, GRU
 from lib.utils import get_device
 import torch.nn.functional as F
-# from Sparsemax.Sparsemax import Sparsemax
 
 
-# GRU description: 
-# http://www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/
 class GRU_unit_cluster(nn.Module):
 	def __init__(self, latent_dim, input_dim, 
 		update_gate = None,
