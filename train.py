@@ -683,27 +683,51 @@ def validate(data_obj, model, is_GPU, device):
     
 #     return torch.cat(observed_test_data, 0), torch.cat(pred_test_data, 0), torch.cat(observed_test_mask, 0), torch.cat(pred_test_mask, 0), torch.cat(observed_test_lens, 0), torch.cat(pred_test_lens, 0)
 
-def print_test_res(test_res):
+def print_test_res(test_res, args):
     
     final_rmse_loss, final_mae_losses, final_rmse_loss2, final_mae_losses2, final_imputed_rmse_loss, final_imputed_mae_loss, final_imputed_rmse_loss2, final_imputed_mae_loss2 = test_res
-    
+
     print('test results::')
     
-    print('test forecasting rmse loss::', final_rmse_loss)
+    if args.model.startswith(cluster_ODE_method):
+    
+        rmse_loss = min(final_rmse_loss, final_rmse_loss2)
         
-    print('test forecasting mae loss::', final_mae_losses)
-
-    print('test forecasting rmse loss 2::', final_rmse_loss2)
+        mae_loss = min(final_mae_losses, final_mae_losses2)
         
-    print('test forecasting mae loss 2::', final_mae_losses2)
+        imputed_rmse_loss = min(final_imputed_rmse_loss, final_imputed_rmse_loss2)
+        
+        imputed_mae_loss = min(final_imputed_mae_loss, final_imputed_mae_loss2)
+        
+        print('test forecasting rmse loss::', rmse_loss)
+            
+        print('test forecasting mae loss::', mae_loss)
     
-    print('test imputation rmse loss::', final_imputed_rmse_loss)
+#         print('test forecasting rmse loss 2::', final_rmse_loss2)
+#             
+#         print('test forecasting mae loss 2::', final_mae_losses2)
+        
+        print('test imputation rmse loss::', imputed_rmse_loss)
+        
+        print('test imputation mae loss::', imputed_mae_loss)
+        
+    else:
+        
+        print('test forecasting rmse loss::', final_rmse_loss)
+            
+        print('test forecasting mae loss::', final_mae_losses)
     
-    print('test imputation mae loss::', final_imputed_mae_loss)
-    
-    print('test imputation rmse loss 2::', final_imputed_rmse_loss2)
-    
-    print('test imputation mae loss 2::', final_imputed_mae_loss2)
+#         print('test forecasting rmse loss 2::', final_rmse_loss2)
+#             
+#         print('test forecasting mae loss 2::', final_mae_losses2)
+        
+        print('test imputation rmse loss::', final_imputed_rmse_loss)
+        
+        print('test imputation mae loss::', final_imputed_mae_loss)
+        
+#         print('test imputation rmse loss 2::', final_imputed_rmse_loss2)
+#         
+#         print('test imputation mae loss 2::', final_imputed_mae_loss2)
     
 #     if final_nll_loss is not None:
 #         final_nll_loss = final_nll_loss/all_count3
@@ -977,7 +1001,7 @@ def main(args):
     
     print('final test loss::')
     
-    print_test_res(selected_test_res)
+    print_test_res(selected_test_res, args)
     
 #     test(data_obj, model, is_GPU, device)
     
