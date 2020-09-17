@@ -20,6 +20,8 @@ python3 generate_time_series.py --dataset USHCN
 To generate data for forecasting on KDDCUP dataset:
 
 ```
+cd dataset_dir/
+unzip mimic3.zip
 cd data/
 python3 generate_time_series.py --dataset KDDCUP
 ```
@@ -29,7 +31,7 @@ python3 generate_time_series.py --dataset KDDCUP
 2. run the forecasting program train.py in the main directory. The arguments for running this program are:
 
 
---dataset: the name of the dataset (KDDCUP or USHCN)
+--dataset: the name of the dataset (KDDCUP or USHCN or MIMIC3)
 
 --model: the model name (DGM2_L or DGM2_O, DGM2_L uses LSTM for transition while DGM2_O uses ODE for transition)
 
@@ -46,6 +48,11 @@ python3 generate_time_series.py --dataset KDDCUP
 --use_gate: flag of using the gate function or not
 
 --gaussian: the parameter gamma to balance the dynamic component and the basis mixture component in the dynamic gaussian mixture distribution, which will take effect when --use_gate is not used
+
+--wait_epoch: number of epochs for the warm-up phase with annealing technique during which the coefficient for the KL divergence term in the loss function is zero.
+
+
+--cluster_num: number of clusters for DGM2_L and DGM2_O. The default value is 20.
 
 ### Running examples on USHCN dataset:
 
