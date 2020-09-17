@@ -683,7 +683,21 @@ def validate(data_obj, model, is_GPU, device):
     
 #     return torch.cat(observed_test_data, 0), torch.cat(pred_test_data, 0), torch.cat(observed_test_mask, 0), torch.cat(pred_test_mask, 0), torch.cat(observed_test_lens, 0), torch.cat(pred_test_lens, 0)
 
-def print_test_res(test_res, args):
+def print_test_res(all_valid_rmse_list, all_test_res, args):
+    
+    
+    all_valid_rmse_array = np.array(all_valid_rmse_list)
+    
+    for i in range(all_valid_rmse_array.shape[0])
+    
+    
+    
+    
+    
+    
+    selected_id = np.argmin(all_valid_rmse_array)
+    
+    test_res = all_test_res[selected_id]
     
     final_rmse_loss, final_mae_losses, final_rmse_loss2, final_mae_losses2, final_imputed_rmse_loss, final_imputed_mae_loss, final_imputed_rmse_loss2, final_imputed_mae_loss2 = test_res
 
@@ -992,16 +1006,14 @@ def main(args):
 #             
 #             model.init_phi_table(updated_centroids, False)
     
-    all_valid_rmse_array = np.array(all_valid_rmse_list)
-    
-    selected_id = np.argmin(all_valid_rmse_array)
-    
-    selected_test_res = all_test_res[selected_id]
+
     
     
     print('final test loss::')
     
-    print_test_res(selected_test_res, args)
+    
+    
+    print_test_res(all_valid_rmse_list, all_test_res, args)
     
 #     test(data_obj, model, is_GPU, device)
     

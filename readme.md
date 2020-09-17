@@ -7,7 +7,7 @@ install conda, pytorch, matplotlib, pandas, scikit-learn tensorboardX, torchdiff
 
 
 ## Instructions on how to use the code to do the forecasting tasks on the USHCN, KDD_CUP and MIMIC-III dataset:
-1. preprocessing the data for forecasting with the following commands in the terminal:
+1. Normalize and partition the dataset for forecasting with the following commands in the terminal (since the raw dataset is very large, here we only provide the dataset after the preprocess step):
 
 
 To generate data for forecasting on USHCN dataset:
@@ -18,6 +18,15 @@ python3 generate_time_series.py --dataset USHCN
 ```
 
 To generate data for forecasting on KDDCUP dataset:
+
+```
+cd data/
+python3 generate_time_series.py --dataset KDDCUP
+```
+
+
+
+To generate data for forecasting on MIMIC3 dataset (the MIMIC3 dataset is very large even after the preprocessing step. Therefore, we compress this dataset here):
 
 ```
 cd dataset_dir/
@@ -47,38 +56,42 @@ python3 generate_time_series.py --dataset KDDCUP
 
 --use_gate: flag of using the gate function or not
 
---gaussian: the parameter gamma to balance the dynamic component and the basis mixture component in the dynamic gaussian mixture distribution, which will take effect when --use_gate is not used
+--gaussian: the parameter gamma to balance the dynamic component and the basis mixture component in the dynamic gaussian mixture distribution, which will take effect when --use_gate is not used, e.g. "--gaussian 0.001"
 
---wait_epoch: number of epochs for the warm-up phase with annealing technique during which the coefficient for the KL divergence term in the loss function is zero.
+--wait_epoch: number of epochs for the warm-up phase with annealing technique during which the coefficient for the KL divergence term in the loss function is zero. The default value is 0
 
 
 --cluster_num: number of clusters for DGM2_L and DGM2_O. The default value is 20.
 
-### Running examples on USHCN dataset:
 
-#### with GPU (suppose the GPU ID is 0) and gate function:
+
+
+
+In what follows, we use USHCN as a running example to show how we run the forecasting program:
+
+### with GPU (suppose the GPU ID is 0) and gate function:
 
 
 
 use DGM2_L:
 ```
-python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate
+python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate --wait_epoch 0
 ```
 
 or
 
 use DGM2_O:
 ```
-python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate
+python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --use_gate --wait_epoch 0
 ```
 
 
-#### without GPU but using gate function:
+### without GPU but using gate function:
 
 use DGM2_L:
 
 ```
-python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --max_kl 5 --use_gate
+python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --max_kl 5 --use_gate --wait_epoch 0
 ```
 
 or
@@ -86,40 +99,7 @@ or
 use DHM2_O:
 
 ```
-python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --use_gate
-```
-
-#### with GPU (suppose the GPU ID is 0) but without using gate function:
-
-
-use DGM2_L:
-```
-python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001
-```
-
-
-or 
-
-use DGM2_O:
-
-```
-python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001
-```
-
-
-
-#### without GPU or using gate function:
-
-use DGM2_L
-```
-python3 train.py --dataset USHCN --model DGM2_L -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
-```
-
-or 
-
-use DGM2_O:
-```
-python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --gaussian 0.001
+python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --use_gate --wait_epoch 0
 ```
 
 
@@ -132,147 +112,16 @@ python3 train.py --dataset USHCN --model DGM2_O -b 100 --epochs 50 --max_kl 5 --
 
 
 
-
-### Running examples on MIMIC3 dataset:
-
-#### with GPU (suppose the GPU ID is 0) and gate function:
+Similarly, we can use the following command to run the forecasting program on MIMIC3 and KDDCUP dataset:
 
 
-
-use DGM2_L:
-```
-python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --GPU --GPUID 0 --max_kl 5 --use_gate --wait_epoch 40
-```
-
-or
-
-use DGM2_O:
 ```
 python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --GPU --GPUID 0 --max_kl 6 --use_gate --wait_epoch 60
 ```
 
-
-#### without GPU but using gate function:
-
-use DGM2_L:
-
-```
-python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --max_kl 5 --use_gate --wait_epoch 40
-```
-
-or
-
-use DHM2_O:
-
-```
-python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --max_kl 6 --use_gate --wait_epoch 60
-```
-
-#### with GPU (suppose the GPU ID is 0) but without using gate function:
+or 
 
 
-use DGM2_L:
-```
-python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --GPU --GPUID 0 --max_kl 5 --gaussian 0.001 --wait_epoch 40
-```
-
-
-or
-
-use DGM2_O:
-
-```
-python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --GPU --GPUID 0 --max_kl 6 --gaussian 0.001 --wait_epoch 60
-```
-
-
-#### without GPU or using gate function:
-
-use DGM2_L
-```
-python3 train.py --dataset MIMIC3 --model DGM2_L -b 500 --epochs 100 --max_kl 5 --gaussian 0.001 --wait_epoch 40
-```
-
-or
-
-use DGM2_O:
-```
-python3 train.py --dataset MIMIC3 --model DGM2_O -b 3000 --epochs 200 --max_kl 6 --gaussian 0.001 --wait_epoch 60
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Running examples on KDDCUP dataset:
-
-#### with GPU (suppose the GPU ID is 0) and gate function:
-
-use DGM2_L
-```
-python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --use_gate
-```
-
-or
-
-use DGM2_O:
 ```
 python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --use_gate
 ```
-
-#### without GPU but using gate function:
-
-use DGM2_L:
-```
-python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --max_kl 3 --use_gate
-```
-
-or 
-
-use DGM2_O:
-```
-python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --max_kl 3 --use_gate
-```
-
-
-
-
-#### with GPU (suppose the GPU ID is 0) but without using gate function:
-
-
-use DGM2_L:
-```
-python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --gaussian 0.001
-```
-
-or 
-
-use DGM2_O:
-```
-python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --GPU --GPUID 0 --max_kl 3 --gaussian 0.001
-```
-
-
-#### without GPU or using gate function:
-
-use DGM2_L:
-```
-python3 train.py --dataset KDDCUP --model DGM2_L -b 200 --epochs 200 --max_kl 3 --gaussian 0.001
-```
-
-or
-
-use DGM2_O:
-```
-python3 train.py --dataset KDDCUP --model DGM2_O -b 200 --epochs 200 --max_kl 3 --gaussian 0.001
-```
-
-
